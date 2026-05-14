@@ -24,6 +24,7 @@
     </div>
 
    <script>
+    
 
 async function enviarPregunta() {
 
@@ -53,7 +54,17 @@ async function enviarPregunta() {
 
         console.log(datos);
 
-        respuestaDiv.innerHTML = datos.respuesta;
+      respuestaDiv.innerHTML = `
+    <p>${datos.respuesta}</p>
+`;
+
+if(datos.grafica){
+
+    respuestaDiv.innerHTML += `
+        <img src="data:image/png;base64,${datos.grafica}"
+             style="max-width:100%; margin-top:20px;">
+    `;
+}
 
     } catch(error) {
 
