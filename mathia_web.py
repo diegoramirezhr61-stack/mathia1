@@ -122,7 +122,7 @@ def resolver_matematica(texto):
         # DERIVADAS
         # =====================================
 
-        if "derivada" in texto:
+        if texto.startswith("derivada de"):
 
             expr = (
                 texto
@@ -142,7 +142,7 @@ def resolver_matematica(texto):
         # INTEGRALES
         # =====================================
 
-        elif "integral" in texto:
+        elif texto.startswith("integral de"):
 
             expr = (
                 texto
