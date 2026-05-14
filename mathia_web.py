@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from groq import Groq
 import os
 import matplotlib
+
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -56,7 +57,13 @@ def preguntar_ia(prompt):
         return respuesta.choices[0].message.content
 
     except Exception as e:
-        return f"Error: {e}"
+
+        return f"Error IA: {e}"
+
+# =========================================================
+# GRÁFICAS
+# =========================================================
+
 def generar_grafica(funcion_str):
 
     try:
@@ -71,7 +78,7 @@ def generar_grafica(funcion_str):
 
         valores_y = funcion(valores_x)
 
-        plt.figure(figsize=(5,5))
+        plt.figure(figsize=(5, 5))
 
         plt.plot(valores_x, valores_y)
 
@@ -87,7 +94,9 @@ def generar_grafica(funcion_str):
 
         img.seek(0)
 
-        grafica_base64 = base64.b64encode(img.getvalue()).decode()
+        grafica_base64 = base64.b64encode(
+            img.getvalue()
+        ).decode()
 
         plt.close()
 
@@ -96,7 +105,11 @@ def generar_grafica(funcion_str):
     except Exception as e:
 
         return None
-    
+
+# =========================================================
+# MATEMÁTICAS
+# =========================================================
+
 def resolver_matematica(texto):
 
     x = symbols('x')
@@ -111,7 +124,11 @@ def resolver_matematica(texto):
 
         if "derivada" in texto:
 
-            expr = texto.replace("derivada de", "").strip()
+            expr = (
+                texto
+                .replace("derivada de", "")
+                .strip()
+            )
 
             expr = expr.replace("^", "**")
 
@@ -127,7 +144,11 @@ def resolver_matematica(texto):
 
         elif "integral" in texto:
 
-            expr = texto.replace("integral de", "").strip()
+            expr = (
+                texto
+                .replace("integral de", "")
+                .strip()
+            )
 
             expr = expr.replace("^", "**")
 
@@ -159,8 +180,18 @@ def resolver_matematica(texto):
     except Exception as e:
 
         return f"Error matemático: {e}"
+
 # =========================================================
 # RUTAS
+# =========================================================
+
+@app.route("/")
+def inicio():
+
+    return render_template("index.html")
+
+# =========================================================
+# PREGUNTAR
 # =========================================================
 
 @app.route("/preguntar", methods=["POST"])
@@ -205,12 +236,14 @@ def preguntar():
             grafica = generar_grafica(funcion)
 
         except:
+
             grafica = None
 
     return jsonify({
         "respuesta": respuesta,
         "grafica": grafica
     })
+
 # =========================================================
 # INICIO
 # =========================================================
