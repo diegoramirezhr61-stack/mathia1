@@ -10,8 +10,10 @@ import numpy as np
 from sympy import *
 import io
 import base64
+import PyPDF2
 
 app = Flask(__name__)
+texto_pdf_global = ""
 
 # =========================================================
 # GROQ
@@ -45,9 +47,16 @@ def preguntar_ia(prompt):
                     )
                 },
                 {
-                    "role": "user",
-                    "content": prompt
-                }
+    "role": "user",
+    "content": f"""
+DOCUMENTO PDF:
+
+{texto_pdf_global[:4000]}
+
+PREGUNTA DEL USUARIO:
+{prompt}
+"""
+}
             ],
 
             temperature=0.3,
@@ -180,6 +189,21 @@ def resolver_matematica(texto):
     except Exception as e:
 
         return f"Error matemático: {e}"
+    
+def leer_pdf(archivo):
+
+    texto = ""
+
+    lector = PyPDF2.PdfReader(archivo)
+
+    for pagina in lector.pages:
+
+        contenido = pagina.extract_text()
+
+        if contenido:
+            texto += contenido + "\n"
+
+    return texto
 
 # =========================================================
 # RUTAS
@@ -189,6 +213,25 @@ def resolver_matematica(texto):
 def inicio():
 
     return render_template("index.html")
+
+@app.route("/subir_pdf", methods=["POST"])
+def subir_pdf():
+
+    global texto_pdf_global
+
+    if "pdf" not in request.files:
+
+        return jsonify({
+            "mensaje": "No se envió PDF"
+        })
+
+    archivo = request.files["pdf"]
+
+    texto_pdf_global = leer_pdf(archivo)
+
+    return jsonify({
+        "mensaje": "PDF cargado correctamente"
+    })
 
 # =========================================================
 # PREGUNTAR
