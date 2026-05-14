@@ -1,7 +1,0 @@
-flask
-groq
-gunicorn
-sympy
-matplotlib
-numpyD
-requests 
