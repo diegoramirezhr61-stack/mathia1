@@ -68,7 +68,24 @@
 
                 loader.classList.add("oculto");
 
-                respuestaDiv.innerHTML = datos.respuesta;
+respuestaDiv.innerHTML = datos.respuesta;
+
+if (datos.grafica) {
+
+    respuestaDiv.innerHTML += `
+
+        <br><br>
+
+        <img
+            src="data:image/png;base64,${datos.grafica}"
+            style="
+                width:100%;
+                border-radius:20px;
+                margin-top:20px;
+            "
+        >
+    `;
+}
 
             } catch(error) {
 
