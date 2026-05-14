@@ -49,99 +49,111 @@
 
     <script>
 
-        async function enviarPregunta() {
-        async function subirPDF() {
+    // =====================================
+    // SUBIR PDF
+    // =====================================
 
-    const input = document.getElementById("pdfInput")
+    async function subirPDF() {
 
-    const archivo = input.files[0]
+        const input = document.getElementById("pdfInput")
 
-    if (!archivo) {
+        const archivo = input.files[0]
 
-        alert("Selecciona un PDF")
+        if (!archivo) {
 
-        return
-    }
+            alert("Selecciona un PDF")
 
-    const formData = new FormData()
-
-    formData.append("pdf", archivo)
-
-    try {
-
-        const respuesta = await fetch("/subir_pdf", {
-
-            method: "POST",
-
-            body: formData
-
-        })
-
-        const datos = await respuesta.json()
-
-        alert(datos.mensaje)
-
-    } catch(error) {
-
-        alert("Error al subir PDF")
-    }
-}
-
-            let pregunta = document.getElementById("pregunta").value;
-
-            let respuestaDiv = document.getElementById("respuesta");
-
-            let loader = document.getElementById("loader");
-
-            respuestaDiv.innerHTML = "";
-
-            loader.classList.remove("oculto");
-
-            try {
-
-                const respuesta = await fetch("/preguntar", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        pregunta: pregunta
-                    })
-                });
-
-                const datos = await respuesta.json();
-
-                loader.classList.add("oculto");
-
-respuestaDiv.innerHTML = datos.respuesta;
-
-if (datos.grafica) {
-
-    respuestaDiv.innerHTML += `
-
-        <br><br>
-
-        <img
-            src="data:image/png;base64,${datos.grafica}"
-            style="
-                width:100%;
-                border-radius:20px;
-                margin-top:20px;
-            "
-        >
-    `;
-}
-
-            } catch(error) {
-
-                loader.classList.add("oculto");
-
-                respuestaDiv.innerHTML = "Error de conexión";
-            }
+            return
         }
 
-    </script>
+        const formData = new FormData()
 
+        formData.append("pdf", archivo)
 
-</body>
-</html>
+        try {
+
+            const respuesta = await fetch("/subir_pdf", {
+
+                method: "POST",
+
+                body: formData
+
+            })
+
+            const datos = await respuesta.json()
+
+            alert(datos.mensaje)
+
+        } catch(error) {
+
+            alert("Error al subir PDF")
+        }
+    }
+
+    // =====================================
+    // PREGUNTAR IA
+    // =====================================
+
+    async function enviarPregunta() {
+
+        let pregunta = document.getElementById("pregunta").value
+
+        let respuestaDiv = document.getElementById("respuesta")
+
+        let loader = document.getElementById("loader")
+
+        respuestaDiv.innerHTML = ""
+
+        loader.classList.remove("oculto")
+
+        try {
+
+            const respuesta = await fetch("/preguntar", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    pregunta: pregunta
+                })
+            })
+
+            const datos = await respuesta.json()
+
+            loader.classList.add("oculto")
+
+            respuestaDiv.innerHTML = datos.respuesta
+
+            // =========================
+            // MOSTRAR GRÁFICA
+            // =========================
+
+            if (datos.grafica) {
+
+                respuestaDiv.innerHTML += `
+
+                    <br><br>
+
+                    <img
+                        src="data:image/png;base64,${datos.grafica}"
+                        style="
+                            width:100%;
+                            border-radius:20px;
+                            margin-top:20px;
+                        "
+                    >
+                `
+            }
+
+        } catch(error) {
+
+            loader.classList.add("oculto")
+
+            respuestaDiv.innerHTML = "Error de conexión"
+        }
+    }
+
+</script>
