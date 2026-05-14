@@ -15,13 +15,22 @@
 
     <div class="fondo"></div>
 
-    <div class="conten<!DOCTYPE html>edor">
+    <div class="contenedor">
 
         <h1>MathIA</h1>
 
         <p class="subtitulo">
             Inteligencia Artificial Matemática
         </p>
+        <input
+    type="file"
+    id="pdfInput"
+    accept=".pdf"
+>
+
+<button onclick="subirPDF()">
+    Subir PDF
+</button>
 
                 <textarea
             id="pregunta"
@@ -41,6 +50,42 @@
     <script>
 
         async function enviarPregunta() {
+        async function subirPDF() {
+
+    const input = document.getElementById("pdfInput")
+
+    const archivo = input.files[0]
+
+    if (!archivo) {
+
+        alert("Selecciona un PDF")
+
+        return
+    }
+
+    const formData = new FormData()
+
+    formData.append("pdf", archivo)
+
+    try {
+
+        const respuesta = await fetch("/subir_pdf", {
+
+            method: "POST",
+
+            body: formData
+
+        })
+
+        const datos = await respuesta.json()
+
+        alert(datos.mensaje)
+
+    } catch(error) {
+
+        alert("Error al subir PDF")
+    }
+}
 
             let pregunta = document.getElementById("pregunta").value;
 
