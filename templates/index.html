@@ -6,73 +6,80 @@
     <title>MathIA</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div class="contenedor">
+    <div class="fondo"></div>
+
+    <div class="conten<!DOCTYPE html>edor">
 
         <h1>MathIA</h1>
 
-        <textarea id="pregunta" placeholder="Escribe tu problema matemático..."></textarea>
+        <p class="subtitulo">
+            Inteligencia Artificial Matemática
+        </p>
+
+                <textarea
+            id="pregunta"
+            placeholder="Escribe un problema matemático..."
+        ></textarea>
 
         <button onclick="enviarPregunta()">
             Preguntar
         </button>
 
+        <div id="loader" class="loader oculto"></div>
+
         <div id="respuesta"></div>
 
     </div>
 
-   <script>
-    
+    <script>
 
-async function enviarPregunta() {
+        async function enviarPregunta() {
 
-    let pregunta = document.getElementById("pregunta").value;
+            let pregunta = document.getElementById("pregunta").value;
 
-    let respuestaDiv = document.getElementById("respuesta");
+            let respuestaDiv = document.getElementById("respuesta");
 
-    respuestaDiv.innerHTML = "Pensando...";
+            let loader = document.getElementById("loader");
 
-    try {
+            respuestaDiv.innerHTML = "";
 
-        const respuesta = await fetch("/preguntar", {
+            loader.classList.remove("oculto");
 
-            method: "POST",
+            try {
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+                const respuesta = await fetch("/preguntar", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        pregunta: pregunta
+                    })
+                });
 
-            body: JSON.stringify({
-                pregunta: pregunta
-            })
+                const datos = await respuesta.json();
 
-        });
+                loader.classList.add("oculto");
 
-        const datos = await respuesta.json();
+                respuestaDiv.innerHTML = datos.respuesta;
 
-        console.log(datos);
+            } catch(error) {
 
-      respuestaDiv.innerHTML = `
-    <p>${datos.respuesta}</p>
-`;
+                loader.classList.add("oculto");
 
-if(datos.grafica){
+                respuestaDiv.innerHTML = "Error de conexión";
+            }
+        }
 
-    respuestaDiv.innerHTML += `
-        <img src="data:image/png;base64,${datos.grafica}"
-             style="max-width:100%; margin-top:20px;">
-    `;
-}
+    </script>
 
-    } catch(error) {
 
-        console.error(error);
-
-        respuestaDiv.innerHTML =
-            "Error de conexión: " + error.message;
-    }
-}
-
-</script>
+</body>
+</html>
