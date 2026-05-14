@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sympy import symbols, sympify, lambdify
+from sympy import *
 import io
 import base64
 
@@ -96,16 +96,71 @@ def generar_grafica(funcion_str):
     except Exception as e:
 
         return None
+    
+def resolver_matematica(texto):
+
+    x = symbols('x')
+
+    texto = texto.lower()
+
+    try:
+
+        # =====================================
+        # DERIVADAS
+        # =====================================
+
+        if "derivada" in texto:
+
+            expr = texto.replace("derivada de", "").strip()
+
+            expr = expr.replace("^", "**")
+
+            expr = sympify(expr)
+
+            resultado = diff(expr, x)
+
+            return f"Derivada:\n{resultado}"
+
+        # =====================================
+        # INTEGRALES
+        # =====================================
+
+        elif "integral" in texto:
+
+            expr = texto.replace("integral de", "").strip()
+
+            expr = expr.replace("^", "**")
+
+            expr = sympify(expr)
+
+            resultado = integrate(expr, x)
+
+            return f"Integral:\n{resultado}"
+
+        # =====================================
+        # MATRICES
+        # =====================================
+
+        elif "matriz" in texto:
+
+            M = Matrix([
+                [1, 2],
+                [3, 4]
+            ])
+
+            return (
+                f"Matriz:\n{M}\n\n"
+                f"Determinante:\n{M.det()}\n\n"
+                f"Inversa:\n{M.inv()}"
+            )
+
+        return None
+
+    except Exception as e:
+
+        return f"Error matemático: {e}"
 # =========================================================
 # RUTAS
-# =========================================================
-
-@app.route("/")
-def inicio():
-    return render_template("index.html")
-
-# =========================================================
-# RUTA PARA PREGUNTAR
 # =========================================================
 
 @app.route("/preguntar", methods=["POST"])
@@ -115,7 +170,20 @@ def preguntar():
 
     pregunta = datos.get("pregunta", "")
 
-    respuesta = preguntar_ia(pregunta)
+    # =====================================
+    # MATEMÁTICAS
+    # =====================================
+
+    respuesta_math = resolver_matematica(pregunta)
+
+    if respuesta_math:
+        respuesta = respuesta_math
+    else:
+        respuesta = preguntar_ia(pregunta)
+
+    # =====================================
+    # GRÁFICAS
+    # =====================================
 
     grafica = None
 
@@ -143,7 +211,6 @@ def preguntar():
         "respuesta": respuesta,
         "grafica": grafica
     })
-
 # =========================================================
 # INICIO
 # =========================================================
