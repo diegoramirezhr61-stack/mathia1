@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, jsonify, session
 from groq import Groq
 import os
 import matplotlib
-
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
@@ -14,7 +13,7 @@ import PyPDF2
 
 app = Flask(__name__)
 app.secret_key = "mathia_secret"
-texto_pdf_global = ""
+
 # =========================================================
 # GROQ
 # =========================================================
@@ -30,44 +29,31 @@ cliente = Groq(api_key=api_key)
 # IA
 # =========================================================
 
-def preguntar_ia(prompt):
-
-    global texto_pdf_global
+def preguntar_ia(prompt, texto_pdf=""):
 
     try:
 
         if "memoria_chat" not in session:
-
             session["memoria_chat"] = []
 
         mensajes = [
-
             {
                 "role": "system",
                 "content": (
-                    "Eres MathIA v5.0, un asistente matemático experto. "
-                    "Hablas español y explicas paso a paso."
+                    "Eres MathIA v5.0, asistente matemático experto. "
+                    "Explicas paso a paso en español."
                 )
             }
-
         ]
 
-        # =========================
-        # MEMORIA
-        # =========================
-
         mensajes.extend(session["memoria_chat"])
-
-        # =========================
-        # MENSAJE ACTUAL
-        # =========================
 
         mensaje_usuario = {
             "role": "user",
             "content": f"""
-DOCUMENTO PDF:
+DOCUMENTO PDF (si existe):
 
-{texto_pdf_global[:4000]}
+{texto_pdf[:4000]}
 
 PREGUNTA:
 {prompt}
@@ -77,26 +63,13 @@ PREGUNTA:
         mensajes.append(mensaje_usuario)
 
         respuesta = cliente.chat.completions.create(
-
             model="llama-3.1-8b-instant",
-
             messages=mensajes,
-
             temperature=0.3,
-
             max_tokens=800
         )
 
-        texto_respuesta = (
-            respuesta
-            .choices[0]
-            .message
-            .content
-        )
-
-        # =========================
-        # GUARDAR MEMORIA
-        # =========================
+        texto_respuesta = respuesta.choices[0].message.content
 
         session["memoria_chat"].append({
             "role": "user",
@@ -108,150 +81,47 @@ PREGUNTA:
             "content": texto_respuesta
         })
 
-        # Limitar memoria
         session["memoria_chat"] = session["memoria_chat"][-10:]
 
         return texto_respuesta
 
     except Exception as e:
-
         return f"Error IA: {e}"
 
 # =========================================================
-# GRÁFICAS
+# PDF (MEJORADO)
 # =========================================================
 
-def generar_grafica(funcion_str):
-
-    try:
-
-        x = symbols('x')
-
-        expresion = sympify(funcion_str)
-
-        funcion = lambdify(x, expresion, "numpy")
-
-        valores_x = np.linspace(-10, 10, 400)
-
-        valores_y = funcion(valores_x)
-
-        plt.figure(figsize=(5, 5))
-
-        plt.plot(valores_x, valores_y)
-
-        plt.axhline(0, color='black')
-
-        plt.axvline(0, color='black')
-
-        plt.grid(True)
-
-        img = io.BytesIO()
-
-        plt.savefig(img, format='png')
-
-        img.seek(0)
-
-        grafica_base64 = base64.b64encode(
-            img.getvalue()
-        ).decode()
-
-        plt.close()
-
-        return grafica_base64
-
-    except Exception as e:
-
-        return None
-
-# =========================================================
-# MATEMÁTICAS
-# =========================================================
-
-def resolver_matematica(texto):
-
-    x = symbols('x')
-
-    texto = texto.lower()
-
-    try:
-
-        # =====================================
-        # DERIVADAS
-        # =====================================
-
-        if texto.startswith("derivada de"):
-
-            expr = (
-                texto
-                .replace("derivada de", "")
-                .strip()
-            )
-
-            expr = expr.replace("^", "**")
-
-            expr = sympify(expr)
-
-            resultado = diff(expr, x)
-
-            return f"Derivada:\n{resultado}"
-
-        # =====================================
-        # INTEGRALES
-        # =====================================
-
-        elif texto.startswith("integral de"):
-
-            expr = (
-                texto
-                .replace("integral de", "")
-                .strip()
-            )
-
-            expr = expr.replace("^", "**")
-
-            expr = sympify(expr)
-
-            resultado = integrate(expr, x)
-
-            return f"Integral:\n{resultado}"
-
-        # =====================================
-        # MATRICES
-        # =====================================
-
-        elif "matriz" in texto:
-
-            M = Matrix([
-                [1, 2],
-                [3, 4]
-            ])
-
-            return (
-                f"Matriz:\n{M}\n\n"
-                f"Determinante:\n{M.det()}\n\n"
-                f"Inversa:\n{M.inv()}"
-            )
-
-        return None
-
-    except Exception as e:
-
-        return f"Error matemático: {e}"
-    
 def leer_pdf(archivo):
 
     texto = ""
 
-    lector = PyPDF2.PdfReader(archivo)
+    try:
+        lector = PyPDF2.PdfReader(archivo)
 
-    for pagina in lector.pages:
+        for pagina in lector.pages:
+            contenido = pagina.extract_text()
+            if contenido:
+                texto += contenido + "\n"
 
-        contenido = pagina.extract_text()
+    except Exception:
+        return ""
 
-        if contenido:
-            texto += contenido + "\n"
+    return texto.strip()
 
-    return texto
+# =========================================================
+# VALIDACIÓN PDF
+# =========================================================
+
+def validar_pdf(texto):
+
+    if not texto:
+        return False
+
+    if len(texto.strip()) < 20:
+        return False
+
+    return True
 
 # =========================================================
 # RUTAS
@@ -259,23 +129,25 @@ def leer_pdf(archivo):
 
 @app.route("/")
 def inicio():
-
     return render_template("index.html")
 
 @app.route("/subir_pdf", methods=["POST"])
 def subir_pdf():
 
-    global texto_pdf_global
-
     if "pdf" not in request.files:
-
-        return jsonify({
-            "mensaje": "No se envió PDF"
-        })
+        return jsonify({"mensaje": "No se envió PDF"})
 
     archivo = request.files["pdf"]
 
-    texto_pdf_global = leer_pdf(archivo)
+    texto = leer_pdf(archivo)
+
+    # guardar en sesión (NO global)
+    session["texto_pdf"] = texto
+
+    if not validar_pdf(texto):
+        return jsonify({
+            "mensaje": "⚠ PDF vacío o escaneado (usa OCR)"
+        })
 
     return jsonify({
         "mensaje": "PDF cargado correctamente"
@@ -289,24 +161,14 @@ def subir_pdf():
 def preguntar():
 
     datos = request.get_json()
-
     pregunta = datos.get("pregunta", "")
 
-    # =====================================
-    # MATEMÁTICAS
-    # =====================================
+    texto_pdf = session.get("texto_pdf", "")
 
-    respuesta_math = resolver_matematica(pregunta)
+    # MATEMÁTICA IA
+    respuesta = preguntar_ia(pregunta, texto_pdf)
 
-    if respuesta_math:
-        respuesta = respuesta_math
-    else:
-        respuesta = preguntar_ia(pregunta)
-
-    # =====================================
     # GRÁFICAS
-    # =====================================
-
     grafica = None
 
     texto = pregunta.lower()
@@ -314,20 +176,30 @@ def preguntar():
     if "grafica" in texto or "gráfica" in texto:
 
         try:
-
-            funcion = (
-                texto
-                .replace("grafica", "")
-                .replace("gráfica", "")
-                .strip()
-            )
-
+            funcion = texto.replace("grafica", "").replace("gráfica", "").strip()
             funcion = funcion.replace("^", "**")
 
-            grafica = generar_grafica(funcion)
+            x = symbols('x')
+            expr = sympify(funcion)
+            f = lambdify(x, expr, "numpy")
+
+            xs = np.linspace(-10, 10, 400)
+            ys = f(xs)
+
+            plt.figure()
+            plt.plot(xs, ys)
+            plt.axhline(0)
+            plt.axvline(0)
+            plt.grid()
+
+            img = io.BytesIO()
+            plt.savefig(img, format="png")
+            img.seek(0)
+
+            grafica = base64.b64encode(img.getvalue()).decode()
+            plt.close()
 
         except:
-
             grafica = None
 
     return jsonify({
@@ -336,7 +208,7 @@ def preguntar():
     })
 
 # =========================================================
-# INICIO
+# MAIN
 # =========================================================
 
 if __name__ == "__main__":
