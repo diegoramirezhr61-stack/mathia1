@@ -32,38 +32,83 @@ cliente = Groq(api_key=api_key)
 
 def preguntar_ia(prompt):
 
+    global texto_pdf_global
+    global memoria_chat
+
     try:
+
+        mensajes = [
+
+            {
+                "role": "system",
+                "content": (
+                    "Eres MathIA v5.0, un asistente matemático experto. "
+                    "Hablas español y explicas paso a paso."
+                )
+            }
+
+        ]
+
+        # =========================
+        # MEMORIA
+        # =========================
+
+        mensajes.extend(memoria_chat)
+
+        # =========================
+        # MENSAJE ACTUAL
+        # =========================
+
+        mensaje_usuario = {
+            "role": "user",
+            "content": f"""
+DOCUMENTO PDF:
+
+{texto_pdf_global[:4000]}
+
+PREGUNTA:
+{prompt}
+"""
+        }
+
+        mensajes.append(mensaje_usuario)
 
         respuesta = cliente.chat.completions.create(
 
             model="llama-3.1-8b-instant",
 
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Eres MathIA v5.0, un asistente matemático experto. "
-                        "Hablas español y explicas paso a paso."
-                    )
-                },
-                {
-    "role": "user",
-    "content": f"""
-DOCUMENTO PDF:
-
-{texto_pdf_global[:4000]}
-
-PREGUNTA DEL USUARIO:
-{prompt}
-"""
-}
-            ],
+            messages=mensajes,
 
             temperature=0.3,
+
             max_tokens=800
         )
 
-        return respuesta.choices[0].message.content
+        texto_respuesta = (
+            respuesta
+            .choices[0]
+            .message
+            .content
+        )
+
+        # =========================
+        # GUARDAR MEMORIA
+        # =========================
+
+        memoria_chat.append({
+            "role": "user",
+            "content": prompt
+        })
+
+        memoria_chat.append({
+            "role": "assistant",
+            "content": texto_respuesta
+        })
+
+        # Limitar memoria
+        memoria_chat = memoria_chat[-10:]
+
+        return texto_respuesta
 
     except Exception as e:
 
