@@ -233,13 +233,20 @@ def preguntar():
     if any(p in texto for p in palabras_grafica):
 
         try:
+            # =========================
+            # LIMPIAR FUNCIÓN
+            # =========================
             funcion = texto
 
             for p in palabras_grafica:
                 funcion = funcion.replace(p, "")
 
             funcion = funcion.strip()
+
+            # 🔥 FIX MATEMÁTICO
             funcion = funcion.replace("^", "**")
+            funcion = funcion.replace("²", "**2")
+            funcion = funcion.replace("³", "**3")
 
             if funcion:
 
