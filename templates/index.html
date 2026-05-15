@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>MathIA</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -19,352 +14,223 @@
 
 <div class="app">
 
-    <!-- ===================================== -->
-    <!-- SIDEBAR -->
-    <!-- ===================================== -->
+<!-- SIDEBAR -->
+<aside class="sidebar">
 
-    <aside class="sidebar">
+    <div class="logo">
+        <div class="logo-icon">∑</div>
+        <div>
+            <h2>MathIA</h2>
+            <p>Asistente matemático inteligente</p>
+        </div>
+    </div>
 
-        <div class="logo">
+    <div class="estado">
+        <span class="punto"></span>
+        activo
+    </div>
 
-            <div class="logo-icon">
-                ∑
+    <div class="seccion">
+        <h3>TEMAS</h3>
+        <div class="tema">📈 Cálculo diferencial</div>
+        <div class="tema">🧮 Álgebra lineal</div>
+        <div class="tema">📊 Estadística</div>
+        <div class="tema">📐 Geometría</div>
+    </div>
+
+    <div class="seccion">
+        <h3>SESIÓN</h3>
+        <div class="stats">
+            <div class="card">
+                <h2 id="contadorPreguntas">0</h2>
+                <p>preguntas</p>
             </div>
-
-            <div>
-                <h2>MathIA</h2>
-                <p>Asistente matemático inteligente</p>
+            <div class="card">
+                <h2>100%</h2>
+                <p>activo</p>
             </div>
+        </div>
+    </div>
 
+</aside>
+
+<!-- CHAT -->
+<main class="chat-container">
+
+    <div id="chat" class="chat">
+
+        <div class="mensaje ia">
+            👋 Hola, soy MathIA. Puedo ayudarte con cálculo, álgebra, matrices, PDFs y más.
         </div>
 
-        <div class="estado">
+    </div>
 
-            <span class="punto"></span>
+    <!-- INPUT -->
+    <div class="input-area">
 
-            activo
+        <input type="file" id="pdfInput" accept=".pdf" hidden>
 
-        </div>
+        <button class="icon-btn" onclick="document.getElementById('pdfInput').click()">📄</button>
 
-        <div class="seccion">
+        <button class="icon-btn" onclick="subirPDF()">⬆</button>
 
-            <h3>TEMAS</h3>
+        <textarea id="pregunta" placeholder="Escribe una pregunta matemática..."></textarea>
 
-            <div class="tema">📈 Cálculo diferencial</div>
+        <button class="icon-btn" onclick="escucharVoz()">🎤</button>
 
-            <div class="tema">🧮 Álgebra lineal</div>
+        <button class="enviar-btn" onclick="enviarPregunta()">Enviar</button>
 
-            <div class="tema">📊 Estadística</div>
+    </div>
 
-            <div class="tema">📐 Geometría</div>
-
-        </div>
-
-        <div class="seccion">
-
-            <h3>SESIÓN ACTUAL</h3>
-
-            <div class="stats">
-
-                <div class="card">
-
-                    <h2 id="contadorPreguntas">0</h2>
-
-                    <p>preguntas</p>
-
-                </div>
-
-                <div class="card">
-
-                    <h2>100%</h2>
-
-                    <p>activo</p>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="seccion">
-
-            <h3>ACCESO RÁPIDO</h3>
-
-            <button class="side-btn">
-                Fórmula general
-            </button>
-
-            <button class="side-btn">
-                Integrales
-            </button>
-
-            <button class="side-btn">
-                Derivadas
-            </button>
-
-        </div>
-
-    </aside>
-
-    <!-- ===================================== -->
-    <!-- CHAT -->
-    <!-- ===================================== -->
-
-    <main class="chat-container">
-
-        <div id="chat" class="chat">
-
-            <div class="mensaje ia">
-
-                👋 Hola, soy MathIA.
-
-                Puedo ayudarte con:
-                álgebra, cálculo, derivadas,
-                integrales, matrices,
-                PDFs y gráficas.
-
-            </div>
-
-        </div>
-
-        <!-- ===================================== -->
-        <!-- INPUT -->
-        <!-- ===================================== -->
-
-        <div class="input-area">
-
-            <input
-                type="file"
-                id="pdfInput"
-                accept=".pdf"
-                hidden
-            >
-
-            <button
-                class="icon-btn"
-                onclick="document.getElementById('pdfInput').click()"
-            >
-                📄
-            </button>
-
-            <button
-                class="icon-btn"
-                onclick="subirPDF()"
-            >
-                ⬆
-            </button>
-
-            <textarea
-                id="pregunta"
-                placeholder="Escribe una pregunta matemática..."
-            ></textarea>
-
-            <button
-                class="icon-btn"
-                onclick="escucharVoz()"
-            >
-                🎤
-            </button>
-
-            <button
-                class="enviar-btn"
-                onclick="enviarPregunta()"
-            >
-                Enviar
-            </button>
-
-        </div>
-
-    </main>
+</main>
 
 </div>
 
 <script>
 
-let totalPreguntas = 0
+let totalPreguntas = 0;
 
-// =====================================
-// SUBIR PDF
-// =====================================
+// ===============================
+// UTILIDAD CHAT (MEJORADO)
+// ===============================
+function agregarMensaje(texto, tipo="ia") {
 
+    const chat = document.getElementById("chat");
+
+    const div = document.createElement("div");
+    div.className = `mensaje ${tipo}`;
+    div.textContent = texto;
+
+    chat.appendChild(div);
+
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// ===============================
+// PDF UPLOAD (CORREGIDO)
+// ===============================
 async function subirPDF() {
 
-    const input = document.getElementById("pdfInput")
-
-    const archivo = input.files[0]
+    const input = document.getElementById("pdfInput");
+    const archivo = input.files[0];
 
     if (!archivo) {
-
-        alert("Selecciona un PDF")
-
-        return
+        alert("Selecciona un PDF");
+        return;
     }
 
-    const formData = new FormData()
+    // VALIDACIÓN
+    if (archivo.size < 1000) {
+        alert("PDF demasiado pequeño o vacío");
+        return;
+    }
 
-    formData.append("pdf", archivo)
+    agregarMensaje("📄 Procesando PDF...", "ia");
+
+    const formData = new FormData();
+    formData.append("pdf", archivo);
 
     try {
 
         const respuesta = await fetch("/subir_pdf", {
-
             method: "POST",
-
             body: formData
+        });
 
-        })
+        const datos = await respuesta.json();
 
-        const datos = await respuesta.json()
+        console.log("PDF backend:", datos);
 
-        agregarMensajeIA(datos.mensaje)
+        agregarMensaje(datos.mensaje || "PDF procesado", "ia");
 
-    } catch(error) {
-
-        agregarMensajeIA("Error al subir PDF")
+    } catch (error) {
+        agregarMensaje("❌ Error al subir PDF", "ia");
     }
+
+    // LIMPIAR INPUT (IMPORTANTE)
+    input.value = "";
 }
 
-// =====================================
-// MENSAJES
-// =====================================
-
-function agregarMensajeUsuario(texto) {
-
-    const chat = document.getElementById("chat")
-
-    chat.innerHTML += `
-
-        <div class="mensaje usuario">
-
-            ${texto}
-
-        </div>
-
-    `
-
-    chat.scrollTop = chat.scrollHeight
-}
-
-function agregarMensajeIA(texto) {
-
-    const chat = document.getElementById("chat")
-
-    chat.innerHTML += `
-
-        <div class="mensaje ia">
-
-            ${texto}
-
-        </div>
-
-    `
-
-    chat.scrollTop = chat.scrollHeight
-}
-
-// =====================================
-// PREGUNTAR
-// =====================================
-
+// ===============================
+// ENVIAR PREGUNTA
+// ===============================
 async function enviarPregunta() {
 
-    const pregunta = document.getElementById("pregunta").value
+    const input = document.getElementById("pregunta");
+    const pregunta = input.value.trim();
 
-    if (!pregunta.trim()) return
+    if (!pregunta) return;
 
-    agregarMensajeUsuario(pregunta)
+    agregarMensaje(pregunta, "usuario");
 
-    document.getElementById("pregunta").value = ""
+    input.value = "";
 
-    totalPreguntas++
+    totalPreguntas++;
+    document.getElementById("contadorPreguntas").innerText = totalPreguntas;
 
-    document.getElementById(
-        "contadorPreguntas"
-    ).innerText = totalPreguntas
+    agregarMensaje("🧠 Pensando...", "ia");
 
     try {
 
         const respuesta = await fetch("/preguntar", {
-
             method: "POST",
-
             headers: {
                 "Content-Type": "application/json"
             },
+            body: JSON.stringify({ pregunta })
+        });
 
-            body: JSON.stringify({
-                pregunta: pregunta
-            })
-        })
+        const datos = await respuesta.json();
 
-        const datos = await respuesta.json()
+        agregarMensaje(datos.respuesta, "ia");
 
-        agregarMensajeIA(datos.respuesta)
+        // VOZ (CORREGIDO)
+        const voz = new SpeechSynthesisUtterance(datos.respuesta);
+        voz.lang = "es-ES";
 
-        // =========================
-        // VOZ
-        // =========================
+        speechSynthesis.cancel();
+        speechSynthesis.speak(voz);
 
-        const voz = new SpeechSynthesisUtterance(
-            datos.respuesta
-        )
-
-        voz.lang = "es-ES"
-
-        speechSynthesis.speak(voz)
-
-        // =========================
-        // GRÁFICAS
-        // =========================
-
+        // GRÁFICA
         if (datos.grafica) {
 
-            const chat = document.getElementById("chat")
+            const chat = document.getElementById("chat");
 
-            chat.innerHTML += `
+            const img = document.createElement("img");
+            img.src = "data:image/png;base64," + datos.grafica;
+            img.className = "grafica";
 
-                <div class="mensaje ia">
+            const div = document.createElement("div");
+            div.className = "mensaje ia";
+            div.appendChild(img);
 
-                    <img
-                        src="data:image/png;base64,${datos.grafica}"
-                        class="grafica"
-                    >
+            chat.appendChild(div);
 
-                </div>
-
-            `
         }
 
-    } catch(error) {
-
-        agregarMensajeIA("Error de conexión")
+    } catch (error) {
+        agregarMensaje("❌ Error de conexión con el servidor", "ia");
     }
 }
 
-// =====================================
+// ===============================
 // VOZ
-// =====================================
-
+// ===============================
 function escucharVoz() {
 
-    const reconocimiento =
-        new webkitSpeechRecognition()
+    const reconocimiento = new webkitSpeechRecognition();
 
-    reconocimiento.lang = "es-ES"
-
-    reconocimiento.start()
+    reconocimiento.lang = "es-ES";
+    reconocimiento.start();
 
     reconocimiento.onresult = async function(evento) {
 
-        const texto =
-            evento.results[0][0].transcript
+        const texto = evento.results[0][0].transcript;
 
-        document.getElementById(
-            "pregunta"
-        ).value = texto
+        document.getElementById("pregunta").value = texto;
 
-        await enviarPregunta()
-    }
+        await enviarPregunta();
+    };
 }
 
 </script>
