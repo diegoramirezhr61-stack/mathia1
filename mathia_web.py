@@ -154,15 +154,14 @@ def preguntar_ia(prompt):
 
 def generar_grafica(funcion):
     try:
-        if not funcion or len(funcion) < 1:
+        if not funcion:
             funcion = "x**2"
 
-        # seguridad básica
-        if "import" in funcion or "__" in funcion:
-            funcion = "x**2"
+        funcion = funcion.replace("^", "**")
 
         x = symbols("x")
-        expr = sympify(funcion, evaluate=True)
+
+        expr = sympify(funcion, evaluate=False)
         f = lambdify(x, expr, "numpy")
 
         xs = np.linspace(-10, 10, 400)
@@ -204,12 +203,50 @@ def preguntar():
         data = request.get_json()
         pregunta = data.get("pregunta", "")
 
-        session["contador_preguntas"] += 1
-
         texto = pregunta.lower()
         palabras = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
 
         es_grafica = any(p in texto for p in palabras)
+
+        grafica = None
+
+        # =========================
+        # 🔥 SI ES GRÁFICA → NO IA
+        # =========================
+        if es_grafica:
+
+            funcion = normalizar_funcion(pregunta)
+
+            funcion = funcion.replace("grafica", "")
+            funcion = funcion.replace("gráfica", "")
+            funcion = funcion.strip()
+
+            if not funcion:
+                funcion = "x**2"
+
+            grafica = generar_grafica(funcion)
+
+            return jsonify({
+                "respuesta": "Gráfica generada correctamente.",
+                "grafica": grafica
+            })
+
+        # =========================
+        # 🔥 SI NO ES GRÁFICA → IA
+        # =========================
+        respuesta = preguntar_ia(pregunta)
+
+        return jsonify({
+            "respuesta": respuesta,
+            "grafica": None
+        })
+
+    except Exception as e:
+        print("ERROR GENERAL:", e)
+        return jsonify({
+            "respuesta": "Error en servidor",
+            "grafica": None
+        })
 
         # =========================
         # IA SIEMPRE RESPONDE
