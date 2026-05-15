@@ -119,11 +119,25 @@ def preguntar_ia(prompt):
     init_session()
 
     mensajes = [
-        {
-            "role": "system",
-            "content": "Eres MathIA. Explicas matemáticas paso a paso."
-        }
-    ]
+    {
+        "role": "system",
+        "content": """
+Eres MathIA.
+
+Explicas matemáticas paso a paso.
+
+IMPORTANTE:
+Cuando escribas fórmulas matemáticas usa formato LaTeX.
+
+Ejemplos:
+$x^2$
+$\\frac{a}{b}$
+$\\int x^2 dx$
+
+Usa SIEMPRE símbolos matemáticos bien formateados.
+"""
+    }
+]
 
     mensajes.extend(session["memoria_chat"])
 
