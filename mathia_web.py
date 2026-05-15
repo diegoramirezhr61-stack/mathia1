@@ -10,6 +10,7 @@ from sympy import *
 import io
 import base64
 import PyPDF2
+import re
 
 app = Flask(__name__)
 app.secret_key = "mathia_secret"
@@ -26,7 +27,7 @@ if not api_key:
 cliente = Groq(api_key=api_key)
 
 # =========================================================
-# PDF LECTOR
+# PDF READER
 # =========================================================
 
 def leer_pdf(archivo):
@@ -47,6 +48,51 @@ def leer_pdf(archivo):
     return texto.strip()
 
 # =========================================================
+# CHUNKS SYSTEM (PDF ULTRA RÁPIDO)
+# =========================================================
+
+def dividir_texto(texto, max_chars=800):
+
+    palabras = texto.split()
+    chunks = []
+    actual = ""
+
+    for palabra in palabras:
+
+        if len(actual) + len(palabra) < max_chars:
+            actual += " " + palabra
+        else:
+            chunks.append(actual.strip())
+            actual = palabra
+
+    if actual:
+        chunks.append(actual.strip())
+
+    return chunks
+
+
+def buscar_chunks(pregunta, chunks, top_k=3):
+
+    pregunta = pregunta.lower()
+    palabras = set(pregunta.split())
+
+    scored = []
+
+    for chunk in chunks:
+
+        score = 0
+
+        for palabra in palabras:
+            if palabra in chunk.lower():
+                score += 1
+
+        scored.append((score, chunk))
+
+    scored.sort(reverse=True, key=lambda x: x[0])
+
+    return [c[1] for c in scored[:top_k]]
+
+# =========================================================
 # IA
 # =========================================================
 
@@ -57,41 +103,40 @@ def preguntar_ia(prompt):
         if "memoria_chat" not in session:
             session["memoria_chat"] = []
 
-        texto_pdf = session.get("texto_pdf", "")
         modo_pdf = session.get("modo_pdf", False)
+        chunks = session.get("pdf_chunks", [])
 
         mensajes = [
             {
                 "role": "system",
                 "content": (
-                    "Eres MathIA. Respondes en español de forma clara."
+                    "Eres MathIA. Respondes en español claro y explicas paso a paso cuando sea necesario."
                 )
             }
         ]
 
         mensajes.extend(session["memoria_chat"])
 
-        # =========================
-        # MODO PDF ACTIVADO
-        # =========================
-        if modo_pdf:
+        # =====================================================
+        # MODO PDF (ULTRA RÁPIDO TIPO CHATGPT)
+        # =====================================================
+        if modo_pdf and chunks:
+
+            relevantes = buscar_chunks(prompt, chunks)
+            contexto = "\n\n".join(relevantes)
 
             contenido = f"""
-ESTÁS EN MODO PDF.
-Reglas:
-- SOLO usa este documento
-- Si no está la respuesta, di: "No está en el documento"
+RESPONDE SOLO CON BASE EN ESTE CONTEXTO DEL DOCUMENTO:
 
-DOCUMENTO:
-{texto_pdf[:4000]}
+{contexto}
 
 PREGUNTA:
 {prompt}
 """
 
-        # =========================
+        # =====================================================
         # MODO NORMAL
-        # =========================
+        # =====================================================
         else:
 
             contenido = prompt
@@ -110,6 +155,7 @@ PREGUNTA:
 
         texto_respuesta = respuesta.choices[0].message.content
 
+        # MEMORIA
         session["memoria_chat"].append({
             "role": "user",
             "content": prompt
@@ -141,15 +187,14 @@ def subir_pdf():
 
     texto = leer_pdf(archivo)
 
-    session["texto_pdf"] = texto
-
     if len(texto) < 20:
-        return jsonify({
-            "mensaje": "⚠ PDF vacío o escaneado"
-        })
+        return jsonify({"mensaje": "⚠ PDF vacío o escaneado"})
+
+    # 🔥 CONVERTIR A CHUNKS (CLAVE DEL SISTEMA RÁPIDO)
+    session["pdf_chunks"] = dividir_texto(texto)
 
     return jsonify({
-        "mensaje": "PDF cargado correctamente"
+        "mensaje": f"PDF procesado en {len(session['pdf_chunks'])} bloques"
     })
 
 # =========================================================
