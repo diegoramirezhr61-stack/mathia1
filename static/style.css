@@ -280,3 +280,122 @@ SCROLL
     background:#334155;
     border-radius:10px;
 }
+/* =========================
+RESPONSIVE DESIGN
+========================= */
+
+/* LAPTOPS */
+@media screen and (max-width: 1400px){
+
+    .sidebar{
+        width:260px;
+    }
+
+    .chat-container{
+        width:calc(100% - 260px);
+    }
+
+    .mensaje{
+        max-width:90%;
+    }
+}
+
+/* TABLETS */
+@media screen and (max-width: 900px){
+
+    .app{
+        flex-direction:column;
+    }
+
+    .sidebar{
+        width:100%;
+        height:auto;
+        border-right:none;
+        border-bottom:1px solid #1e293b;
+    }
+
+    .chat-container{
+        width:100%;
+        height:calc(100vh - 260px);
+    }
+
+    .stats{
+        flex-direction:row;
+    }
+
+    .mensaje{
+        max-width:95%;
+    }
+
+    textarea{
+        font-size:16px;
+    }
+}
+
+/* CELULARES */
+@media screen and (max-width: 600px){
+
+    body{
+        overflow:hidden;
+    }
+
+    .logo h2{
+        font-size:20px;
+    }
+
+    .logo p{
+        font-size:12px;
+    }
+
+    .sidebar{
+        padding:15px;
+    }
+
+    .chat{
+        padding:15px;
+    }
+
+    .mensaje{
+        padding:14px;
+        font-size:14px;
+        max-width:100%;
+    }
+
+    .input-area{
+        padding:10px;
+        gap:8px;
+    }
+
+    textarea{
+        min-height:45px;
+        max-height:120px;
+        font-size:15px;
+        padding:12px;
+    }
+
+    .icon-btn,
+    .enviar-btn{
+        width:45px;
+        height:45px;
+        font-size:18px;
+    }
+
+    .enviar-btn{
+        width:auto;
+        padding:0 18px;
+    }
+
+    .grafica{
+        width:100%;
+        height:auto;
+        border-radius:12px;
+    }
+
+    .stats{
+        gap:10px;
+    }
+
+    .card{
+        padding:12px;
+    }
+}
