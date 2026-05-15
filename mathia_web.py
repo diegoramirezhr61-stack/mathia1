@@ -233,17 +233,20 @@ def preguntar():
     if any(p in texto for p in palabras_grafica):
 
         try:
-            # =========================
-            # LIMPIAR FUNCIÓN
-            # =========================
             funcion = texto
 
             for p in palabras_grafica:
                 funcion = funcion.replace(p, "")
 
-            funcion = funcion.strip()
+            funcion = funcion.strip().lower()
 
-            # 🔥 FIX MATEMÁTICO
+            # traductor matemático
+            funcion = funcion.replace("x al cuadrado", "x^2")
+            funcion = funcion.replace("x al cubo", "x^3")
+            funcion = funcion.replace("seno", "sin")
+            funcion = funcion.replace("coseno", "cos")
+            funcion = funcion.replace("tangente", "tan")
+
             funcion = funcion.replace("^", "**")
             funcion = funcion.replace("²", "**2")
             funcion = funcion.replace("³", "**3")
@@ -278,7 +281,6 @@ def preguntar():
         "respuesta": respuesta,
         "grafica": grafica
     })
-
 # =========================================================
 # INICIO
 # =========================================================
