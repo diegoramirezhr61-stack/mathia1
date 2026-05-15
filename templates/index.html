@@ -87,6 +87,22 @@
 </div>
 
 <script>
+    function agregarTyping(){
+    const chat = document.getElementById("chat");
+
+    const div = document.createElement("div");
+    div.className = "mensaje ia typing";
+    div.id = "typing";
+    div.textContent = "MathIA escribiendo";
+
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function quitarTyping(){
+    const typing = document.getElementById("typing");
+    if (typing) typing.remove();
+}
 
 let totalPreguntas = 0;
 
@@ -161,6 +177,9 @@ async function enviarPregunta() {
 
     if (!pregunta) return;
 
+    // =========================
+    // MENSAJE USUARIO
+    // =========================
     agregarMensaje(pregunta, "usuario");
 
     input.value = "";
@@ -168,7 +187,10 @@ async function enviarPregunta() {
     totalPreguntas++;
     document.getElementById("contadorPreguntas").innerText = totalPreguntas;
 
-    agregarMensaje("🧠 Pensando...", "ia");
+    // =========================
+    // TYPING ANIMATION
+    // =========================
+    agregarTyping();
 
     try {
 
@@ -182,37 +204,49 @@ async function enviarPregunta() {
 
         const datos = await respuesta.json();
 
+        // =========================
+        // QUITAR "ESCRIBIENDO"
+        // =========================
+        quitarTyping();
+
+        // =========================
+        // MENSAJE IA
+        // =========================
         agregarMensaje(datos.respuesta, "ia");
 
-        // VOZ (CORREGIDO)
+        // =========================
+        // VOZ
+        // =========================
         const voz = new SpeechSynthesisUtterance(datos.respuesta);
         voz.lang = "es-ES";
 
         speechSynthesis.cancel();
         speechSynthesis.speak(voz);
 
+        // =========================
         // GRÁFICA
+        // =========================
         if (datos.grafica) {
 
             const chat = document.getElementById("chat");
+
+            const div = document.createElement("div");
+            div.className = "mensaje ia";
 
             const img = document.createElement("img");
             img.src = "data:image/png;base64," + datos.grafica;
             img.className = "grafica";
 
-            const div = document.createElement("div");
-            div.className = "mensaje ia";
             div.appendChild(img);
-
             chat.appendChild(div);
-
         }
 
     } catch (error) {
+
+        quitarTyping();
         agregarMensaje("❌ Error de conexión con el servidor", "ia");
     }
 }
-
 // ===============================
 // VOZ
 // ===============================
