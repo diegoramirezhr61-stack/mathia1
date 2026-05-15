@@ -26,6 +26,10 @@ body{
     display:flex;
 
     height:100vh;
+
+    width:100vw;
+
+    overflow:hidden;
 }
 
 /* ===================================== */
@@ -209,7 +213,11 @@ body{
 
     justify-content:space-between;
 
-    padding:25px;
+    padding:20px;
+
+    width:100%;
+
+    overflow:hidden;
 }
 
 .chat{
@@ -225,6 +233,8 @@ body{
     gap:20px;
 
     padding-right:10px;
+
+    width:100%;
 }
 
 /* ===================================== */
@@ -272,22 +282,26 @@ body{
 
     gap:10px;
 
-    margin-top:20px;
+    margin-top:15px;
 
-    background:#111827;
+    background:#0f172a;
+
+    border:1px solid rgba(255,255,255,0.08);
 
     padding:15px;
 
-    border-radius:25px;
+    border-radius:20px;
+
+    width:100%;
 }
 
 textarea{
 
     flex:1;
 
-    background:transparent;
+    background:#111827;
 
-    border:none;
+    border:1px solid rgba(255,255,255,0.08);
 
     outline:none;
 
@@ -297,14 +311,18 @@ textarea{
 
     font-size:16px;
 
-    height:50px;
+    min-height:55px;
 
-    padding-top:12px;
+    max-height:120px;
+
+    border-radius:15px;
+
+    padding:15px;
 }
 
 textarea::placeholder{
 
-    color:#94a3b8;
+    color:#cbd5e1;
 }
 
 .icon-btn{
