@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from groq import Groq
 import os
 import matplotlib
@@ -13,8 +13,8 @@ import base64
 import PyPDF2
 
 app = Flask(__name__)
+app.secret_key = "mathia_secret"
 texto_pdf_global = ""
-memoria_chat = []
 # =========================================================
 # GROQ
 # =========================================================
@@ -33,9 +33,12 @@ cliente = Groq(api_key=api_key)
 def preguntar_ia(prompt):
 
     global texto_pdf_global
-    global memoria_chat
 
     try:
+
+        if "memoria_chat" not in session:
+
+            session["memoria_chat"] = []
 
         mensajes = [
 
@@ -53,7 +56,7 @@ def preguntar_ia(prompt):
         # MEMORIA
         # =========================
 
-        mensajes.extend(memoria_chat)
+        mensajes.extend(session["memoria_chat"])
 
         # =========================
         # MENSAJE ACTUAL
@@ -95,18 +98,18 @@ PREGUNTA:
         # GUARDAR MEMORIA
         # =========================
 
-        memoria_chat.append({
+        session["memoria_chat"].append({
             "role": "user",
             "content": prompt
         })
 
-        memoria_chat.append({
+        session["memoria_chat"].append({
             "role": "assistant",
             "content": texto_respuesta
         })
 
         # Limitar memoria
-        memoria_chat = memoria_chat[-10:]
+        session["memoria_chat"] = session["memoria_chat"][-10:]
 
         return texto_respuesta
 
