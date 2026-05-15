@@ -87,6 +87,7 @@
 </div>
 
 <script>
+    let usarVoz = false;
     function agregarTyping(){
     const chat = document.getElementById("chat");
 
@@ -217,11 +218,14 @@ async function enviarPregunta() {
         // =========================
         // VOZ
         // =========================
-        const voz = new SpeechSynthesisUtterance(datos.respuesta);
-        voz.lang = "es-ES";
+      if (usarVoz) {
 
-        speechSynthesis.cancel();
-        speechSynthesis.speak(voz);
+    const voz = new SpeechSynthesisUtterance(datos.respuesta);
+    voz.lang = "es-ES";
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(voz);
+}
 
         // =========================
         // GRÁFICA
@@ -252,9 +256,12 @@ async function enviarPregunta() {
 // ===============================
 function escucharVoz() {
 
+    usarVoz = true; // 🔥 ACTIVA VOZ SOLO AQUÍ
+
     const reconocimiento = new webkitSpeechRecognition();
 
     reconocimiento.lang = "es-ES";
+
     reconocimiento.start();
 
     reconocimiento.onresult = async function(evento) {
@@ -264,7 +271,9 @@ function escucharVoz() {
         document.getElementById("pregunta").value = texto;
 
         await enviarPregunta();
-    };
+
+        usarVoz = false; // 🔥 DESACTIVA DESPUÉS
+    }
 }
 
 </script>
