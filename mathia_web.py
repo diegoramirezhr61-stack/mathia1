@@ -116,12 +116,13 @@ def normalizar_funcion(texto):
 # =========================
 
 def preguntar_ia(prompt):
+
     init_session()
 
     mensajes = [
-    {
-        "role": "system",
-        "content": """
+        {
+            "role": "system",
+            "content": """
 Eres MathIA.
 
 Explicas matemáticas paso a paso.
@@ -136,14 +137,15 @@ $\\int x^2 dx$
 
 Usa SIEMPRE símbolos matemáticos bien formateados.
 """
-    }
-]
+        }
+    ]
 
     mensajes.extend(session["memoria_chat"])
 
-    contenido = prompt
-
-    mensajes.append({"role": "user", "content": contenido})
+    mensajes.append({
+        "role": "user",
+        "content": prompt
+    })
 
     respuesta = cliente.chat.completions.create(
         model="llama-3.1-8b-instant",
@@ -154,8 +156,15 @@ Usa SIEMPRE símbolos matemáticos bien formateados.
 
     texto = respuesta.choices[0].message.content
 
-    session["memoria_chat"].append({"role": "user", "content": prompt})
-    session["memoria_chat"].append({"role": "assistant", "content": texto})
+    session["memoria_chat"].append({
+        "role": "user",
+        "content": prompt
+    })
+
+    session["memoria_chat"].append({
+        "role": "assistant",
+        "content": texto
+    })
 
     session["memoria_chat"] = session["memoria_chat"][-10:]
 
