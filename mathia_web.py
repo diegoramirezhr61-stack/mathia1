@@ -249,19 +249,25 @@ def preguntar():
 
         texto = pregunta.lower()
 
-        palabras = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
+        palabras_grafica = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
+
+        es_grafica = any(p in texto for p in palabras_grafica)
 
         grafica = None
 
         # =========================
-        # 1. PRIORIDAD: GRÁFICA
+        # IA SIEMPRE RESPONDE
         # =========================
-        if any(p in texto for p in palabras):
+        respuesta = preguntar_ia(pregunta)
+
+        # =========================
+        # GRÁFICA (SI APLICA)
+        # =========================
+        if es_grafica:
 
             funcion = normalizar_funcion(pregunta)
 
-            # fallback seguro
-            if not funcion or funcion.strip() == "":
+            if not funcion:
                 funcion = "x**2"
 
             try:
@@ -285,24 +291,17 @@ def preguntar():
                 grafica = base64.b64encode(img.getvalue()).decode()
                 plt.close()
 
+                session["historial_graficas"].append(grafica)
+                session["historial_graficas"] = session["historial_graficas"][-10:]
+
             except Exception as e:
                 print("ERROR GRAFICA:", e)
-                grafica = None
-
-            # 🔥 IMPORTANTE: RESPONDE AQUÍ Y SAL
-            return jsonify({
-                "respuesta": "Gráfica generada correctamente.",
-                "grafica": grafica
-            })
-
-        # =========================
-        # 2. NORMAL IA
-        # =========================
-        respuesta = preguntar_ia(pregunta)
 
         return jsonify({
             "respuesta": respuesta,
-            "grafica": None
+            "grafica": grafica,
+            "preguntas": session["contador_preguntas"],
+            "graficas": len(session["historial_graficas"])
         })
 
     except Exception as e:
@@ -318,16 +317,15 @@ def preguntar():
 # DASHBOARD API
 # =========================
 
-@app.route("/dashboard", methods=["GET"])
+@app.route("/dashboard")
 def dashboard():
     init_session()
 
     return jsonify({
-        "preguntas": session["contador_preguntas"],
-        "graficas": len(session["historial_graficas"]),
-        "ultimas_graficas": session["historial_graficas"]
+        "preguntas_totales": session["contador_preguntas"],
+        "graficas_generadas": len(session["historial_graficas"]),
+        "memoria_chat": len(session["memoria_chat"])
     })
-
 
 # =========================
 # RUN
