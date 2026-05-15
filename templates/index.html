@@ -40,6 +40,9 @@
         <button onclick="enviarPregunta()">
             Preguntar
         </button>
+        <button onclick="escucharVoz()">
+    🎤 Hablar
+</button>
 
         <div id="loader" class="loader oculto"></div>
 
@@ -126,6 +129,11 @@
             loader.classList.add("oculto")
 
             respuestaDiv.innerHTML = datos.respuesta
+            const voz = new SpeechSynthesisUtterance(datos.respuesta)
+
+voz.lang = "es-ES"
+
+speechSynthesis.speak(voz)
 
             // =========================
             // MOSTRAR GRÁFICA
@@ -155,5 +163,27 @@
             respuestaDiv.innerHTML = "Error de conexión"
         }
     }
+ // =====================================
+// VOZ
+// =====================================
 
+function escucharVoz() {
+
+    const reconocimiento = new webkitSpeechRecognition()
+
+    reconocimiento.lang = "es-ES"
+
+    reconocimiento.start()
+
+    reconocimiento.onresult = async function(evento) {
+
+        const texto = evento.results[0][0].transcript
+
+        document.getElementById("pregunta").value = texto
+
+        await enviarPregunta()
+    }
+}
 </script>
+</body>
+</html>
