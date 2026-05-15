@@ -53,15 +53,13 @@ def leer_pdf(archivo):
     try:
         lector = PyPDF2.PdfReader(archivo)
         texto = ""
-
         for p in lector.pages:
             t = p.extract_text()
             if t:
                 texto += t + "\n"
-
         return texto.strip()
-
-    except:
+    except Exception as e:
+        print(f"Error leyendo PDF: {e}")
         return ""
 
 
@@ -84,7 +82,7 @@ def dividir_texto(texto, max_chars=800):
 
 
 # =========================
-# NORMALIZAR GRÁFICA
+# NORMALIZAR FUNCIÓN
 # =========================
 
 def normalizar_funcion(texto):
@@ -159,12 +157,11 @@ def generar_grafica(funcion):
         if not funcion or len(funcion) < 1:
             funcion = "x**2"
 
-        # seguridad
+        # seguridad básica
         if "import" in funcion or "__" in funcion:
             funcion = "x**2"
 
         x = symbols("x")
-
         expr = sympify(funcion, evaluate=True)
         f = lambdify(x, expr, "numpy")
 
@@ -190,7 +187,7 @@ def generar_grafica(funcion):
 
 
 # =========================
-# ROUTES
+# RUTAS
 # =========================
 
 @app.route("/")
