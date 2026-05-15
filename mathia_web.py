@@ -26,41 +26,80 @@ if not api_key:
 cliente = Groq(api_key=api_key)
 
 # =========================================================
+# PDF LECTOR
+# =========================================================
+
+def leer_pdf(archivo):
+
+    texto = ""
+
+    try:
+        lector = PyPDF2.PdfReader(archivo)
+
+        for pagina in lector.pages:
+            contenido = pagina.extract_text()
+            if contenido:
+                texto += contenido + "\n"
+
+    except Exception:
+        return ""
+
+    return texto.strip()
+
+# =========================================================
 # IA
 # =========================================================
 
-def preguntar_ia(prompt, texto_pdf=""):
+def preguntar_ia(prompt):
 
     try:
 
         if "memoria_chat" not in session:
             session["memoria_chat"] = []
 
+        texto_pdf = session.get("texto_pdf", "")
+        modo_pdf = session.get("modo_pdf", False)
+
         mensajes = [
             {
                 "role": "system",
                 "content": (
-                    "Eres MathIA v5.0, asistente matemático experto. "
-                    "Explicas paso a paso en español."
+                    "Eres MathIA. Respondes en español de forma clara."
                 )
             }
         ]
 
         mensajes.extend(session["memoria_chat"])
 
-        mensaje_usuario = {
-            "role": "user",
-            "content": f"""
-DOCUMENTO PDF (si existe):
+        # =========================
+        # MODO PDF ACTIVADO
+        # =========================
+        if modo_pdf:
 
+            contenido = f"""
+ESTÁS EN MODO PDF.
+Reglas:
+- SOLO usa este documento
+- Si no está la respuesta, di: "No está en el documento"
+
+DOCUMENTO:
 {texto_pdf[:4000]}
 
 PREGUNTA:
 {prompt}
 """
-        }
 
-        mensajes.append(mensaje_usuario)
+        # =========================
+        # MODO NORMAL
+        # =========================
+        else:
+
+            contenido = prompt
+
+        mensajes.append({
+            "role": "user",
+            "content": contenido
+        })
 
         respuesta = cliente.chat.completions.create(
             model="llama-3.1-8b-instant",
@@ -89,47 +128,8 @@ PREGUNTA:
         return f"Error IA: {e}"
 
 # =========================================================
-# PDF (MEJORADO)
+# PDF UPLOAD
 # =========================================================
-
-def leer_pdf(archivo):
-
-    texto = ""
-
-    try:
-        lector = PyPDF2.PdfReader(archivo)
-
-        for pagina in lector.pages:
-            contenido = pagina.extract_text()
-            if contenido:
-                texto += contenido + "\n"
-
-    except Exception:
-        return ""
-
-    return texto.strip()
-
-# =========================================================
-# VALIDACIÓN PDF
-# =========================================================
-
-def validar_pdf(texto):
-
-    if not texto:
-        return False
-
-    if len(texto.strip()) < 20:
-        return False
-
-    return True
-
-# =========================================================
-# RUTAS
-# =========================================================
-
-@app.route("/")
-def inicio():
-    return render_template("index.html")
 
 @app.route("/subir_pdf", methods=["POST"])
 def subir_pdf():
@@ -141,16 +141,31 @@ def subir_pdf():
 
     texto = leer_pdf(archivo)
 
-    # guardar en sesión (NO global)
     session["texto_pdf"] = texto
 
-    if not validar_pdf(texto):
+    if len(texto) < 20:
         return jsonify({
-            "mensaje": "⚠ PDF vacío o escaneado (usa OCR)"
+            "mensaje": "⚠ PDF vacío o escaneado"
         })
 
     return jsonify({
         "mensaje": "PDF cargado correctamente"
+    })
+
+# =========================================================
+# MODO PDF ON/OFF
+# =========================================================
+
+@app.route("/modo_pdf", methods=["POST"])
+def modo_pdf():
+
+    data = request.get_json()
+    estado = data.get("estado", False)
+
+    session["modo_pdf"] = estado
+
+    return jsonify({
+        "modo_pdf": session["modo_pdf"]
     })
 
 # =========================================================
@@ -163,12 +178,8 @@ def preguntar():
     datos = request.get_json()
     pregunta = datos.get("pregunta", "")
 
-    texto_pdf = session.get("texto_pdf", "")
+    respuesta = preguntar_ia(pregunta)
 
-    # MATEMÁTICA IA
-    respuesta = preguntar_ia(pregunta, texto_pdf)
-
-    # GRÁFICAS
     grafica = None
 
     texto = pregunta.lower()
@@ -176,6 +187,7 @@ def preguntar():
     if "grafica" in texto or "gráfica" in texto:
 
         try:
+
             funcion = texto.replace("grafica", "").replace("gráfica", "").strip()
             funcion = funcion.replace("^", "**")
 
@@ -206,6 +218,14 @@ def preguntar():
         "respuesta": respuesta,
         "grafica": grafica
     })
+
+# =========================================================
+# INICIO
+# =========================================================
+
+@app.route("/")
+def inicio():
+    return render_template("index.html")
 
 # =========================================================
 # MAIN
