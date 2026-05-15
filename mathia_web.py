@@ -241,32 +241,77 @@ def subir_pdf():
 def preguntar():
     init_session()
 
-    datos = request.get_json()
-    pregunta = datos.get("pregunta", "")
+    try:
+        datos = request.get_json()
+        pregunta = datos.get("pregunta", "")
 
-    session["contador_preguntas"] += 1
+        session["contador_preguntas"] += 1
 
-    respuesta = preguntar_ia(pregunta)
+        texto = pregunta.lower()
 
-    grafica = None
-    texto = pregunta.lower()
+        palabras = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
 
-    palabras = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
+        grafica = None
 
-    if any(p in texto for p in palabras):
-        funcion = normalizar_funcion(pregunta)
+        # =========================
+        # 1. PRIORIDAD: GRÁFICA
+        # =========================
+        if any(p in texto for p in palabras):
 
-        if funcion:
-            grafica = generar_grafica(funcion)
+            funcion = normalizar_funcion(pregunta)
 
-            if grafica:
-                session["historial_graficas"].append(grafica)
-                session["historial_graficas"] = session["historial_graficas"][-10:]
+            # fallback seguro
+            if not funcion or funcion.strip() == "":
+                funcion = "x**2"
 
-    return jsonify({
-        "respuesta": respuesta,
-        "grafica": grafica
-    })
+            try:
+                x = symbols("x")
+                expr = sympify(funcion)
+                f = lambdify(x, expr, "numpy")
+
+                xs = np.linspace(-10, 10, 400)
+                ys = f(xs)
+
+                plt.figure()
+                plt.plot(xs, ys)
+                plt.axhline(0)
+                plt.axvline(0)
+                plt.grid()
+
+                img = io.BytesIO()
+                plt.savefig(img, format="png")
+                img.seek(0)
+
+                grafica = base64.b64encode(img.getvalue()).decode()
+                plt.close()
+
+            except Exception as e:
+                print("ERROR GRAFICA:", e)
+                grafica = None
+
+            # 🔥 IMPORTANTE: RESPONDE AQUÍ Y SAL
+            return jsonify({
+                "respuesta": "Gráfica generada correctamente.",
+                "grafica": grafica
+            })
+
+        # =========================
+        # 2. NORMAL IA
+        # =========================
+        respuesta = preguntar_ia(pregunta)
+
+        return jsonify({
+            "respuesta": respuesta,
+            "grafica": None
+        })
+
+    except Exception as e:
+        print("ERROR GENERAL:", e)
+
+        return jsonify({
+            "respuesta": "Error en el servidor",
+            "grafica": None
+        })
 
 
 # =========================
