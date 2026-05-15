@@ -10,7 +10,6 @@ from sympy import *
 import io
 import base64
 import PyPDF2
-import re
 
 app = Flask(__name__)
 app.secret_key = "mathia_secret"
@@ -31,9 +30,7 @@ cliente = Groq(api_key=api_key)
 # =========================================================
 
 def leer_pdf(archivo):
-
     texto = ""
-
     try:
         lector = PyPDF2.PdfReader(archivo)
 
@@ -48,17 +45,15 @@ def leer_pdf(archivo):
     return texto.strip()
 
 # =========================================================
-# CHUNKS SYSTEM (PDF ULTRA RÁPIDO)
+# CHUNKS SYSTEM
 # =========================================================
 
 def dividir_texto(texto, max_chars=800):
-
     palabras = texto.split()
     chunks = []
     actual = ""
 
     for palabra in palabras:
-
         if len(actual) + len(palabra) < max_chars:
             actual += " " + palabra
         else:
@@ -72,20 +67,16 @@ def dividir_texto(texto, max_chars=800):
 
 
 def buscar_chunks(pregunta, chunks, top_k=3):
-
     pregunta = pregunta.lower()
     palabras = set(pregunta.split())
 
     scored = []
 
     for chunk in chunks:
-
         score = 0
-
         for palabra in palabras:
             if palabra in chunk.lower():
                 score += 1
-
         scored.append((score, chunk))
 
     scored.sort(reverse=True, key=lambda x: x[0])
@@ -109,17 +100,12 @@ def preguntar_ia(prompt):
         mensajes = [
             {
                 "role": "system",
-                "content": (
-                    "Eres MathIA. Respondes en español claro y explicas paso a paso cuando sea necesario."
-                )
+                "content": "Eres MathIA. Respondes en español claro y explicas paso a paso."
             }
         ]
 
         mensajes.extend(session["memoria_chat"])
 
-        # =====================================================
-        # MODO PDF (ULTRA RÁPIDO TIPO CHATGPT)
-        # =====================================================
         if modo_pdf and chunks:
 
             relevantes = buscar_chunks(prompt, chunks)
@@ -133,18 +119,10 @@ RESPONDE SOLO CON BASE EN ESTE CONTEXTO DEL DOCUMENTO:
 PREGUNTA:
 {prompt}
 """
-
-        # =====================================================
-        # MODO NORMAL
-        # =====================================================
         else:
-
             contenido = prompt
 
-        mensajes.append({
-            "role": "user",
-            "content": contenido
-        })
+        mensajes.append({"role": "user", "content": contenido})
 
         respuesta = cliente.chat.completions.create(
             model="llama-3.1-8b-instant",
@@ -155,16 +133,8 @@ PREGUNTA:
 
         texto_respuesta = respuesta.choices[0].message.content
 
-        # MEMORIA
-        session["memoria_chat"].append({
-            "role": "user",
-            "content": prompt
-        })
-
-        session["memoria_chat"].append({
-            "role": "assistant",
-            "content": texto_respuesta
-        })
+        session["memoria_chat"].append({"role": "user", "content": prompt})
+        session["memoria_chat"].append({"role": "assistant", "content": texto_respuesta})
 
         session["memoria_chat"] = session["memoria_chat"][-10:]
 
@@ -172,6 +142,38 @@ PREGUNTA:
 
     except Exception as e:
         return f"Error IA: {e}"
+
+# =========================================================
+# NORMALIZAR FUNCIÓN (GRÁFICAS)
+# =========================================================
+
+def normalizar_funcion(texto):
+
+    texto = texto.lower()
+
+    palabras_grafica = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
+
+    for p in palabras_grafica:
+        texto = texto.replace(p, "")
+
+    texto = texto.strip()
+
+    # lenguaje natural
+    texto = texto.replace("x al cuadrado", "x**2")
+    texto = texto.replace("x al cubo", "x**3")
+    texto = texto.replace("cuadrado", "**2")
+    texto = texto.replace("cubo", "**3")
+
+    texto = texto.replace("seno", "sin(x)")
+    texto = texto.replace("coseno", "cos(x)")
+    texto = texto.replace("tangente", "tan(x)")
+
+    texto = texto.replace("^", "**")
+
+    if not texto:
+        texto = "x**2"
+
+    return texto
 
 # =========================================================
 # PDF UPLOAD
@@ -184,13 +186,11 @@ def subir_pdf():
         return jsonify({"mensaje": "No se envió PDF"})
 
     archivo = request.files["pdf"]
-
     texto = leer_pdf(archivo)
 
     if len(texto) < 20:
         return jsonify({"mensaje": "⚠ PDF vacío o escaneado"})
 
-    # 🔥 CONVERTIR A CHUNKS (CLAVE DEL SISTEMA RÁPIDO)
     session["pdf_chunks"] = dividir_texto(texto)
 
     return jsonify({
@@ -198,23 +198,19 @@ def subir_pdf():
     })
 
 # =========================================================
-# MODO PDF ON/OFF
+# MODO PDF
 # =========================================================
 
 @app.route("/modo_pdf", methods=["POST"])
 def modo_pdf():
 
     data = request.get_json()
-    estado = data.get("estado", False)
+    session["modo_pdf"] = data.get("estado", False)
 
-    session["modo_pdf"] = estado
-
-    return jsonify({
-        "modo_pdf": session["modo_pdf"]
-    })
+    return jsonify({"modo_pdf": session["modo_pdf"]})
 
 # =========================================================
-# PREGUNTAR
+# PREGUNTAR + GRÁFICAS
 # =========================================================
 
 @app.route("/preguntar", methods=["POST"])
@@ -233,45 +229,27 @@ def preguntar():
     if any(p in texto for p in palabras_grafica):
 
         try:
-            funcion = texto
+            funcion = normalizar_funcion(pregunta)
 
-            for p in palabras_grafica:
-                funcion = funcion.replace(p, "")
+            x = symbols('x')
+            expr = sympify(funcion)
+            f = lambdify(x, expr, "numpy")
 
-            funcion = funcion.strip().lower()
+            xs = np.linspace(-10, 10, 400)
+            ys = f(xs)
 
-            # traductor matemático
-            funcion = funcion.replace("x al cuadrado", "x^2")
-            funcion = funcion.replace("x al cubo", "x^3")
-            funcion = funcion.replace("seno", "sin")
-            funcion = funcion.replace("coseno", "cos")
-            funcion = funcion.replace("tangente", "tan")
+            plt.figure()
+            plt.plot(xs, ys)
+            plt.axhline(0)
+            plt.axvline(0)
+            plt.grid()
 
-            funcion = funcion.replace("^", "**")
-            funcion = funcion.replace("²", "**2")
-            funcion = funcion.replace("³", "**3")
+            img = io.BytesIO()
+            plt.savefig(img, format="png")
+            img.seek(0)
 
-            if funcion:
-
-                x = symbols('x')
-                expr = sympify(funcion)
-                f = lambdify(x, expr, "numpy")
-
-                xs = np.linspace(-10, 10, 400)
-                ys = f(xs)
-
-                plt.figure()
-                plt.plot(xs, ys)
-                plt.axhline(0)
-                plt.axvline(0)
-                plt.grid()
-
-                img = io.BytesIO()
-                plt.savefig(img, format="png")
-                img.seek(0)
-
-                grafica = base64.b64encode(img.getvalue()).decode()
-                plt.close()
+            grafica = base64.b64encode(img.getvalue()).decode()
+            plt.close()
 
         except Exception as e:
             print("Error grafica:", e)
@@ -281,6 +259,7 @@ def preguntar():
         "respuesta": respuesta,
         "grafica": grafica
     })
+
 # =========================================================
 # INICIO
 # =========================================================
