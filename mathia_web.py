@@ -25,7 +25,7 @@ if not api_key:
 cliente = Groq(api_key=api_key)
 
 # =========================
-# INIT SESSION
+# SESSION INIT
 # =========================
 
 def init_session():
@@ -50,16 +50,19 @@ def init_session():
 # =========================
 
 def leer_pdf(archivo):
-    texto = ""
     try:
         lector = PyPDF2.PdfReader(archivo)
-        for pagina in lector.pages:
-            contenido = pagina.extract_text()
-            if contenido:
-                texto += contenido + "\n"
+        texto = ""
+
+        for p in lector.pages:
+            t = p.extract_text()
+            if t:
+                texto += t + "\n"
+
+        return texto.strip()
+
     except:
         return ""
-    return texto.strip()
 
 
 def dividir_texto(texto, max_chars=800):
@@ -80,32 +83,20 @@ def dividir_texto(texto, max_chars=800):
     return chunks
 
 
-def buscar_chunks(pregunta, chunks, top_k=3):
-    pregunta = pregunta.lower()
-    palabras = set(pregunta.split())
-
-    scored = []
-    for c in chunks:
-        score = sum(1 for p in palabras if p in c.lower())
-        scored.append((score, c))
-
-    scored.sort(reverse=True, key=lambda x: x[0])
-    return [c[1] for c in scored[:top_k]]
-
-
 # =========================
-# NORMALIZAR FUNCION
+# NORMALIZAR GRÁFICA
 # =========================
 
 def normalizar_funcion(texto):
     texto = texto.lower()
 
-    palabras = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
-    for p in palabras:
+    borrar = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
+    for p in borrar:
         texto = texto.replace(p, "")
 
     texto = texto.strip()
 
+    # lenguaje natural → matemático
     texto = texto.replace("x al cuadrado", "x^2")
     texto = texto.replace("x al cubo", "x^3")
     texto = texto.replace("al cuadrado", "^2")
@@ -129,9 +120,6 @@ def normalizar_funcion(texto):
 def preguntar_ia(prompt):
     init_session()
 
-    modo_pdf = session["modo_pdf"]
-    chunks = session["pdf_chunks"]
-
     mensajes = [
         {
             "role": "system",
@@ -141,19 +129,7 @@ def preguntar_ia(prompt):
 
     mensajes.extend(session["memoria_chat"])
 
-    if modo_pdf and chunks:
-        relevantes = buscar_chunks(prompt, chunks)
-        contexto = "\n\n".join(relevantes)
-
-        contenido = f"""
-DOCUMENTO:
-{contexto}
-
-PREGUNTA:
-{prompt}
-"""
-    else:
-        contenido = prompt
+    contenido = prompt
 
     mensajes.append({"role": "user", "content": contenido})
 
@@ -175,13 +151,21 @@ PREGUNTA:
 
 
 # =========================
-# GRAFICA
+# GRAFICA SEGURA (FIX REAL)
 # =========================
 
 def generar_grafica(funcion):
     try:
+        if not funcion or len(funcion) < 1:
+            funcion = "x**2"
+
+        # seguridad
+        if "import" in funcion or "__" in funcion:
+            funcion = "x**2"
+
         x = symbols("x")
-        expr = sympify(funcion)
+
+        expr = sympify(funcion, evaluate=True)
         f = lambdify(x, expr, "numpy")
 
         xs = np.linspace(-10, 10, 400)
@@ -195,8 +179,9 @@ def generar_grafica(funcion):
 
         img = io.BytesIO()
         plt.savefig(img, format="png")
-        img.seek(0)
+        plt.close()
 
+        img.seek(0)
         return base64.b64encode(img.getvalue()).decode()
 
     except Exception as e:
@@ -214,90 +199,48 @@ def home():
     return render_template("index.html")
 
 
-@app.route("/subir_pdf", methods=["POST"])
-def subir_pdf():
-    init_session()
-
-    if "pdf" not in request.files:
-        return jsonify({"mensaje": "No PDF"})
-
-    archivo = request.files["pdf"]
-    texto = leer_pdf(archivo)
-
-    if len(texto) < 20:
-        return jsonify({"mensaje": "PDF vacío"})
-
-    session["pdf_chunks"] = dividir_texto(texto)
-
-    return jsonify({
-        "mensaje": "PDF cargado",
-        "chunks": len(session["pdf_chunks"])
-    })
-
-
 @app.route("/preguntar", methods=["POST"])
 def preguntar():
     init_session()
 
     try:
-        datos = request.get_json()
-        pregunta = datos.get("pregunta", "")
+        data = request.get_json()
+        pregunta = data.get("pregunta", "")
 
         session["contador_preguntas"] += 1
 
         texto = pregunta.lower()
-        palabras_grafica = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
+        palabras = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
 
-        es_grafica = any(p in texto for p in palabras_grafica)
-
-        grafica = None
+        es_grafica = any(p in texto for p in palabras)
 
         # =========================
         # IA SIEMPRE RESPONDE
         # =========================
         respuesta = preguntar_ia(pregunta)
 
+        grafica = None
+
         # =========================
-        # GRAFICA SEGURA
+        # GRAFICA (NO BLOQUEA)
         # =========================
         if es_grafica:
             try:
                 funcion = normalizar_funcion(pregunta)
 
-                funcion = funcion.lower()
-                for p in palabras_grafica:
+                for p in palabras:
                     funcion = funcion.replace(p, "")
 
                 funcion = funcion.strip()
 
-                if funcion == "" or len(funcion) < 2:
+                if not funcion:
                     funcion = "x**2"
 
-                if "import" in funcion or "__" in funcion:
-                    funcion = "x**2"
+                grafica = generar_grafica(funcion)
 
-                x = symbols("x")
-                expr = sympify(funcion, evaluate=True)
-                f = lambdify(x, expr, "numpy")
-
-                xs = np.linspace(-10, 10, 400)
-                ys = f(xs)
-
-                plt.figure()
-                plt.plot(xs, ys)
-                plt.axhline(0)
-                plt.axvline(0)
-                plt.grid()
-
-                img = io.BytesIO()
-                plt.savefig(img, format="png")
-                img.seek(0)
-
-                grafica = base64.b64encode(img.getvalue()).decode()
-                plt.close()
-
-                session["historial_graficas"].append(grafica)
-                session["historial_graficas"] = session["historial_graficas"][-10:]
+                if grafica:
+                    session["historial_graficas"].append(grafica)
+                    session["historial_graficas"] = session["historial_graficas"][-10:]
 
             except Exception as e:
                 print("ERROR GRAFICA:", e)
@@ -310,7 +253,6 @@ def preguntar():
 
     except Exception as e:
         print("ERROR GENERAL:", e)
-
         return jsonify({
             "respuesta": "Error en servidor",
             "grafica": None
