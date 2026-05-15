@@ -10,55 +10,70 @@ from sympy import *
 import io
 import base64
 import PyPDF2
+import re
 
 app = Flask(__name__)
 app.secret_key = "mathia_secret"
 
-# =========================================================
+# =========================
 # GROQ
-# =========================================================
+# =========================
 
 api_key = os.getenv("GROQ_API_KEY")
-
 if not api_key:
-    raise Exception("Falta GROQ_API_KEY en variables de entorno")
+    raise Exception("Falta GROQ_API_KEY")
 
 cliente = Groq(api_key=api_key)
 
-# =========================================================
-# PDF READER
-# =========================================================
+# =========================
+# INIT SESSION DATA
+# =========================
+
+def init_session():
+    if "memoria_chat" not in session:
+        session["memoria_chat"] = []
+
+    if "pdf_chunks" not in session:
+        session["pdf_chunks"] = []
+
+    if "modo_pdf" not in session:
+        session["modo_pdf"] = False
+
+    if "historial_graficas" not in session:
+        session["historial_graficas"] = []
+
+    if "contador_preguntas" not in session:
+        session["contador_preguntas"] = 0
+
+
+# =========================
+# PDF
+# =========================
 
 def leer_pdf(archivo):
     texto = ""
     try:
         lector = PyPDF2.PdfReader(archivo)
-
         for pagina in lector.pages:
             contenido = pagina.extract_text()
             if contenido:
                 texto += contenido + "\n"
-
-    except Exception:
+    except:
         return ""
-
     return texto.strip()
 
-# =========================================================
-# CHUNKS SYSTEM
-# =========================================================
 
 def dividir_texto(texto, max_chars=800):
     palabras = texto.split()
     chunks = []
     actual = ""
 
-    for palabra in palabras:
-        if len(actual) + len(palabra) < max_chars:
-            actual += " " + palabra
+    for p in palabras:
+        if len(actual) + len(p) < max_chars:
+            actual += " " + p
         else:
             chunks.append(actual.strip())
-            actual = palabra
+            actual = p
 
     if actual:
         chunks.append(actual.strip())
@@ -71,212 +86,207 @@ def buscar_chunks(pregunta, chunks, top_k=3):
     palabras = set(pregunta.split())
 
     scored = []
-
-    for chunk in chunks:
-        score = 0
-        for palabra in palabras:
-            if palabra in chunk.lower():
-                score += 1
-        scored.append((score, chunk))
+    for c in chunks:
+        score = sum(1 for p in palabras if p in c.lower())
+        scored.append((score, c))
 
     scored.sort(reverse=True, key=lambda x: x[0])
-
     return [c[1] for c in scored[:top_k]]
 
-# =========================================================
+
+# =========================
+# NORMALIZAR FUNCIÓN
+# =========================
+
+def normalizar_funcion(texto):
+    texto = texto.lower()
+
+    palabras = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
+    for p in palabras:
+        texto = texto.replace(p, "")
+
+    texto = texto.strip()
+
+    # traducciones
+    texto = texto.replace("x al cuadrado", "x^2")
+    texto = texto.replace("x al cubo", "x^3")
+    texto = texto.replace("al cuadrado", "^2")
+    texto = texto.replace("al cubo", "^3")
+
+    texto = texto.replace("^", "**")
+    texto = texto.replace("²", "**2")
+    texto = texto.replace("³", "**3")
+
+    texto = texto.replace("seno", "sin")
+    texto = texto.replace("coseno", "cos")
+    texto = texto.replace("tangente", "tan")
+
+    return texto
+
+
+# =========================
 # IA
-# =========================================================
+# =========================
 
 def preguntar_ia(prompt):
+    init_session()
 
-    try:
+    modo_pdf = session["modo_pdf"]
+    chunks = session["pdf_chunks"]
 
-        if "memoria_chat" not in session:
-            session["memoria_chat"] = []
+    mensajes = [
+        {
+            "role": "system",
+            "content": "Eres MathIA. Explicas matemáticas paso a paso."
+        }
+    ]
 
-        modo_pdf = session.get("modo_pdf", False)
-        chunks = session.get("pdf_chunks", [])
+    mensajes.extend(session["memoria_chat"])
 
-        mensajes = [
-            {
-                "role": "system",
-                "content": "Eres MathIA. Respondes en español claro y explicas paso a paso."
-            }
-        ]
+    if modo_pdf and chunks:
+        relevantes = buscar_chunks(prompt, chunks)
+        contexto = "\n\n".join(relevantes)
 
-        mensajes.extend(session["memoria_chat"])
-
-        if modo_pdf and chunks:
-
-            relevantes = buscar_chunks(prompt, chunks)
-            contexto = "\n\n".join(relevantes)
-
-            contenido = f"""
-RESPONDE SOLO CON BASE EN ESTE CONTEXTO DEL DOCUMENTO:
-
+        contenido = f"""
+DOCUMENTO:
 {contexto}
 
 PREGUNTA:
 {prompt}
 """
-        else:
-            contenido = prompt
+    else:
+        contenido = prompt
 
-        mensajes.append({"role": "user", "content": contenido})
+    mensajes.append({"role": "user", "content": contenido})
 
-        respuesta = cliente.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=mensajes,
-            temperature=0.3,
-            max_tokens=800
-        )
+    respuesta = cliente.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=mensajes,
+        temperature=0.3,
+        max_tokens=800
+    )
 
-        texto_respuesta = respuesta.choices[0].message.content
+    texto = respuesta.choices[0].message.content
 
-        session["memoria_chat"].append({"role": "user", "content": prompt})
-        session["memoria_chat"].append({"role": "assistant", "content": texto_respuesta})
+    session["memoria_chat"].append({"role": "user", "content": prompt})
+    session["memoria_chat"].append({"role": "assistant", "content": texto})
 
-        session["memoria_chat"] = session["memoria_chat"][-10:]
-
-        return texto_respuesta
-
-    except Exception as e:
-        return f"Error IA: {e}"
-
-# =========================================================
-# NORMALIZAR FUNCIÓN (GRÁFICAS)
-# =========================================================
-
-def normalizar_funcion(texto):
-
-    texto = texto.lower()
-
-    palabras_grafica = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
-
-    for p in palabras_grafica:
-        texto = texto.replace(p, "")
-
-    texto = texto.strip()
-
-    # lenguaje natural
-    texto = texto.replace("x al cuadrado", "x**2")
-    texto = texto.replace("x al cubo", "x**3")
-    texto = texto.replace("cuadrado", "**2")
-    texto = texto.replace("cubo", "**3")
-
-    texto = texto.replace("seno", "sin(x)")
-    texto = texto.replace("coseno", "cos(x)")
-    texto = texto.replace("tangente", "tan(x)")
-
-    texto = texto.replace("^", "**")
-
-    if not texto:
-        texto = "x**2"
+    session["memoria_chat"] = session["memoria_chat"][-10:]
 
     return texto
 
-# =========================================================
-# PDF UPLOAD
-# =========================================================
+
+# =========================
+# GRAFICA
+# =========================
+
+def generar_grafica(funcion):
+    try:
+        x = symbols("x")
+        expr = sympify(funcion)
+        f = lambdify(x, expr, "numpy")
+
+        xs = np.linspace(-10, 10, 400)
+        ys = f(xs)
+
+        plt.figure()
+        plt.plot(xs, ys)
+        plt.axhline(0)
+        plt.axvline(0)
+        plt.grid()
+
+        img = io.BytesIO()
+        plt.savefig(img, format="png")
+        img.seek(0)
+
+        return base64.b64encode(img.getvalue()).decode()
+
+    except Exception as e:
+        print("Error grafica:", e)
+        return None
+
+
+# =========================
+# ROUTES
+# =========================
+
+@app.route("/")
+def home():
+    init_session()
+    return render_template("index.html")
+
 
 @app.route("/subir_pdf", methods=["POST"])
 def subir_pdf():
+    init_session()
 
     if "pdf" not in request.files:
-        return jsonify({"mensaje": "No se envió PDF"})
+        return jsonify({"mensaje": "No PDF"})
 
     archivo = request.files["pdf"]
     texto = leer_pdf(archivo)
 
     if len(texto) < 20:
-        return jsonify({"mensaje": "⚠ PDF vacío o escaneado"})
+        return jsonify({"mensaje": "PDF vacío"})
 
     session["pdf_chunks"] = dividir_texto(texto)
 
     return jsonify({
-        "mensaje": f"PDF procesado en {len(session['pdf_chunks'])} bloques"
+        "mensaje": "PDF cargado",
+        "chunks": len(session["pdf_chunks"])
     })
 
-# =========================================================
-# MODO PDF
-# =========================================================
-
-@app.route("/modo_pdf", methods=["POST"])
-def modo_pdf():
-
-    data = request.get_json()
-    session["modo_pdf"] = data.get("estado", False)
-
-    return jsonify({"modo_pdf": session["modo_pdf"]})
-
-# =========================================================
-# PREGUNTAR + GRÁFICAS
-# =========================================================
 
 @app.route("/preguntar", methods=["POST"])
 def preguntar():
+    init_session()
 
     datos = request.get_json()
     pregunta = datos.get("pregunta", "")
+
+    session["contador_preguntas"] += 1
 
     respuesta = preguntar_ia(pregunta)
 
     grafica = None
     texto = pregunta.lower()
 
-    palabras_grafica = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
+    palabras = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
 
-    if any(p in texto for p in palabras_grafica):
+    if any(p in texto for p in palabras):
+        funcion = normalizar_funcion(pregunta)
 
-        try:
-            funcion = normalizar_funcion(pregunta)
+        if funcion:
+            grafica = generar_grafica(funcion)
 
-            x = symbols('x')
-            expr = sympify(funcion)
-            f = lambdify(x, expr, "numpy")
-
-            xs = np.linspace(-10, 10, 400)
-            ys = f(xs)
-
-            plt.figure()
-            plt.plot(xs, ys)
-            plt.axhline(0)
-            plt.axvline(0)
-            plt.grid()
-
-            img = io.BytesIO()
-            plt.savefig(img, format="png")
-            img.seek(0)
-
-            grafica = base64.b64encode(img.getvalue()).decode()
-            plt.close()
-
-        except Exception as e:
-            print("Error grafica:", e)
-            grafica = None
+            if grafica:
+                session["historial_graficas"].append(grafica)
+                session["historial_graficas"] = session["historial_graficas"][-10:]
 
     return jsonify({
         "respuesta": respuesta,
         "grafica": grafica
     })
 
-# =========================================================
-# INICIO
-# =========================================================
 
-@app.route("/")
-def inicio():
-    return render_template("index.html")
+# =========================
+# DASHBOARD API
+# =========================
 
-# =========================================================
-# MAIN
-# =========================================================
+@app.route("/dashboard", methods=["GET"])
+def dashboard():
+    init_session()
+
+    return jsonify({
+        "preguntas": session["contador_preguntas"],
+        "graficas": len(session["historial_graficas"]),
+        "ultimas_graficas": session["historial_graficas"]
+    })
+
+
+# =========================
+# RUN
+# =========================
 
 if __name__ == "__main__":
-
-    port = int(os.environ.get("PORT", 5000))
-
-    app.run(
-        host="0.0.0.0",
-        port=port
-    )
+    app.run(host="0.0.0.0", port=5000)
