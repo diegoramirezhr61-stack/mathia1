@@ -3,197 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>MathIA</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
+
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
-    <div class="fondo"></div>
+<div class="app">
 
-    <div class="contenedor">
+    <!-- ===================================== -->
+    <!-- SIDEBAR -->
+    <!-- ===================================== -->
 
-        <h1>MathIA</h1>
+    <aside class="sidebar">
 
-        <p class="subtitulo">
-            Inteligencia Artificial Matemática
-        </p>
-        <input
-    type="file"
-    id="pdfInput"
-    accept=".pdf"
->
+        <div class="logo">
 
-<button onclick="subirPDF()">
-    Subir PDF
-</button>
+            <div class="logo-icon">
+                ∑
+            </div>
 
-                <textarea
-            id="pregunta"
-            placeholder="Escribe un problema matemático..."
-        ></textarea>
+            <div>
+                <h2>MathIA</h2>
+                <p>Asistente matemático inteligente</p>
+            </div>
 
-        <button onclick="enviarPregunta()">
-            Preguntar
-        </button>
-        <button onclick="escucharVoz()">
-    🎤 Hablar
-</button>
+        </div>
 
-        <div id="loader" class="loader oculto"></div>
+        <div class="estado">
 
-        <div id="chat"></div>
+            <span class="punto"></span>
 
-    </div>
+            activo
 
-    <script>
+        </div>
 
-    // =====================================
-    // SUBIR PDF
-    // =====================================
+        <div class="seccion">
 
-    async function subirPDF() {
+            <h3>TEMAS</h3>
 
-        const input = document.getElementById("pdfInput")
+            <div class="tema">📈 Cálculo diferencial</div>
 
-        const archivo = input.files[0]
+            <div class="tema">🧮 Álgebra lineal</div>
 
-        if (!archivo) {
+            <div class="tema">📊 Estadística</div>
 
-            alert("Selecciona un PDF")
+            <div class="tema">📐 Geometría</div>
 
-            return
-        }
+        </div>
 
-        const formData = new FormData()
+        <div class="seccion">
 
-        formData.append("pdf", archivo)
+            <h3>SESIÓN ACTUAL</h3>
 
-        try {
+            <div class="stats">
 
-            const respuesta = await fetch("/subir_pdf", {
+                <div class="card">
 
-                method: "POST",
+                    <h2 id="contadorPreguntas">0</h2>
 
-                body: formData
+                    <p>preguntas</p>
 
-            })
+                </div>
 
-            const datos = await respuesta.json()
+                <div class="card">
 
-            alert(datos.mensaje)
+                    <h2>100%</h2>
 
-        } catch(error) {
+                    <p>activo</p>
 
-            alert("Error al subir PDF")
-        }
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="seccion">
+
+            <h3>ACCESO RÁPIDO</h3>
+
+            <button class="side-btn">
+                Fórmula general
+            </button>
+
+            <button class="side-btn">
+                Integrales
+            </button>
+
+            <button class="side-btn">
+                Derivadas
+            </button>
+
+        </div>
+
+    </aside>
+
+    <!-- ===================================== -->
+    <!-- CHAT -->
+    <!-- ===================================== -->
+
+    <main class="chat-container">
+
+        <div id="chat" class="chat">
+
+            <div class="mensaje ia">
+
+                👋 Hola, soy MathIA.
+
+                Puedo ayudarte con:
+                álgebra, cálculo, derivadas,
+                integrales, matrices,
+                PDFs y gráficas.
+
+            </div>
+
+        </div>
+
+        <!-- ===================================== -->
+        <!-- INPUT -->
+        <!-- ===================================== -->
+
+        <div class="input-area">
+
+            <input
+                type="file"
+                id="pdfInput"
+                accept=".pdf"
+                hidden
+            >
+
+            <button
+                class="icon-btn"
+                onclick="document.getElementById('pdfInput').click()"
+            >
+                📄
+            </button>
+
+            <button
+                class="icon-btn"
+                onclick="subirPDF()"
+            >
+                ⬆
+            </button>
+
+            <textarea
+                id="pregunta"
+                placeholder="Escribe una pregunta matemática..."
+            ></textarea>
+
+            <button
+                class="icon-btn"
+                onclick="escucharVoz()"
+            >
+                🎤
+            </button>
+
+            <button
+                class="enviar-btn"
+                onclick="enviarPregunta()"
+            >
+                Enviar
+            </button>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+
+let totalPreguntas = 0
+
+// =====================================
+// SUBIR PDF
+// =====================================
+
+async function subirPDF() {
+
+    const input = document.getElementById("pdfInput")
+
+    const archivo = input.files[0]
+
+    if (!archivo) {
+
+        alert("Selecciona un PDF")
+
+        return
     }
 
-    // =====================================
-    // PREGUNTAR IA
-    // =====================================
+    const formData = new FormData()
 
-    async function enviarPregunta() {
+    formData.append("pdf", archivo)
 
-        let pregunta = document.getElementById("pregunta").value
+    try {
 
-        let respuestaDiv = document.getElementById("respuesta")
+        const respuesta = await fetch("/subir_pdf", {
 
-        let loader = document.getElementById("loader")
+            method: "POST",
 
-        let chat = document.getElementById("chat")
+            body: formData
 
+        })
 
-        loader.classList.remove("oculto")
+        const datos = await respuesta.json()
 
-        chat.innerHTML += `
+        agregarMensajeIA(datos.mensaje)
 
-    <div class="mensaje usuario">
+    } catch(error) {
 
-        ${pregunta}
+        agregarMensajeIA("Error al subir PDF")
+    }
+}
 
-    </div>
+// =====================================
+// MENSAJES
+// =====================================
 
-`
+function agregarMensajeUsuario(texto) {
 
-        try {
+    const chat = document.getElementById("chat")
 
-            const respuesta = await fetch("/preguntar", {
+    chat.innerHTML += `
 
-                method: "POST",
+        <div class="mensaje usuario">
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+            ${texto}
 
-                body: JSON.stringify({
-                    pregunta: pregunta
-                })
-            })
+        </div>
 
-            const datos = await respuesta.json()
-            chat.innerHTML += `
+    `
 
-    <div class="mensaje ia">
+    chat.scrollTop = chat.scrollHeight
+}
 
-        ${datos.respuesta}
+function agregarMensajeIA(texto) {
 
-    </div>
-
-`
-
-            loader.classList.add("oculto")
-
-            const voz = new SpeechSynthesisUtterance(datos.respuesta)
-
-voz.lang = "es-ES"
-
-speechSynthesis.speak(voz)
-
-            // =========================
-            // MOSTRAR GRÁFICA
-            // =========================
-
-if (datos.grafica) {
+    const chat = document.getElementById("chat")
 
     chat.innerHTML += `
 
         <div class="mensaje ia">
 
-            <img
-                src="data:image/png;base64,${datos.grafica}"
-                style="
-                    width:100%;
-                    border-radius:20px;
-                    margin-top:10px;
-                "
-            >
+            ${texto}
 
         </div>
 
     `
+
+    chat.scrollTop = chat.scrollHeight
 }
 
-chat.scrollTop = chat.scrollHeight
-        } catch(error) {
+// =====================================
+// PREGUNTAR
+// =====================================
 
-            loader.classList.add("oculto")
+async function enviarPregunta() {
 
-            respuestaDiv.innerHTML = "Error de conexión"
+    const pregunta = document.getElementById("pregunta").value
+
+    if (!pregunta.trim()) return
+
+    agregarMensajeUsuario(pregunta)
+
+    document.getElementById("pregunta").value = ""
+
+    totalPreguntas++
+
+    document.getElementById(
+        "contadorPreguntas"
+    ).innerText = totalPreguntas
+
+    try {
+
+        const respuesta = await fetch("/preguntar", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                pregunta: pregunta
+            })
+        })
+
+        const datos = await respuesta.json()
+
+        agregarMensajeIA(datos.respuesta)
+
+        // =========================
+        // VOZ
+        // =========================
+
+        const voz = new SpeechSynthesisUtterance(
+            datos.respuesta
+        )
+
+        voz.lang = "es-ES"
+
+        speechSynthesis.speak(voz)
+
+        // =========================
+        // GRÁFICAS
+        // =========================
+
+        if (datos.grafica) {
+
+            const chat = document.getElementById("chat")
+
+            chat.innerHTML += `
+
+                <div class="mensaje ia">
+
+                    <img
+                        src="data:image/png;base64,${datos.grafica}"
+                        class="grafica"
+                    >
+
+                </div>
+
+            `
         }
+
+    } catch(error) {
+
+        agregarMensajeIA("Error de conexión")
     }
-    
- // =====================================
+}
+
+// =====================================
 // VOZ
 // =====================================
 
 function escucharVoz() {
 
-    const reconocimiento = new webkitSpeechRecognition()
+    const reconocimiento =
+        new webkitSpeechRecognition()
 
     reconocimiento.lang = "es-ES"
 
@@ -201,13 +356,18 @@ function escucharVoz() {
 
     reconocimiento.onresult = async function(evento) {
 
-        const texto = evento.results[0][0].transcript
+        const texto =
+            evento.results[0][0].transcript
 
-        document.getElementById("pregunta").value = texto
+        document.getElementById(
+            "pregunta"
+        ).value = texto
 
         await enviarPregunta()
     }
 }
+
 </script>
+
 </body>
 </html>
