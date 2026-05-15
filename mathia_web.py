@@ -226,37 +226,45 @@ def preguntar():
     respuesta = preguntar_ia(pregunta)
 
     grafica = None
-
     texto = pregunta.lower()
 
-    if "grafica" in texto or "gráfica" in texto:
+    palabras_grafica = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
+
+    if any(p in texto for p in palabras_grafica):
 
         try:
+            funcion = texto
 
-            funcion = texto.replace("grafica", "").replace("gráfica", "").strip()
+            for p in palabras_grafica:
+                funcion = funcion.replace(p, "")
+
+            funcion = funcion.strip()
             funcion = funcion.replace("^", "**")
 
-            x = symbols('x')
-            expr = sympify(funcion)
-            f = lambdify(x, expr, "numpy")
+            if funcion:
 
-            xs = np.linspace(-10, 10, 400)
-            ys = f(xs)
+                x = symbols('x')
+                expr = sympify(funcion)
+                f = lambdify(x, expr, "numpy")
 
-            plt.figure()
-            plt.plot(xs, ys)
-            plt.axhline(0)
-            plt.axvline(0)
-            plt.grid()
+                xs = np.linspace(-10, 10, 400)
+                ys = f(xs)
 
-            img = io.BytesIO()
-            plt.savefig(img, format="png")
-            img.seek(0)
+                plt.figure()
+                plt.plot(xs, ys)
+                plt.axhline(0)
+                plt.axvline(0)
+                plt.grid()
 
-            grafica = base64.b64encode(img.getvalue()).decode()
-            plt.close()
+                img = io.BytesIO()
+                plt.savefig(img, format="png")
+                img.seek(0)
 
-        except:
+                grafica = base64.b64encode(img.getvalue()).decode()
+                plt.close()
+
+        except Exception as e:
+            print("Error grafica:", e)
             grafica = None
 
     return jsonify({
