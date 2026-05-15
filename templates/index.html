@@ -46,7 +46,7 @@
 
         <div id="loader" class="loader oculto"></div>
 
-        <div id="respuesta"></div>
+        <div id="chat"></div>
 
     </div>
 
@@ -105,9 +105,20 @@
 
         let loader = document.getElementById("loader")
 
-        respuestaDiv.innerHTML = ""
+        let chat = document.getElementById("chat")
+
 
         loader.classList.remove("oculto")
+
+        chat.innerHTML += `
+
+    <div class="mensaje usuario">
+
+        ${pregunta}
+
+    </div>
+
+`
 
         try {
 
@@ -125,10 +136,18 @@
             })
 
             const datos = await respuesta.json()
+            chat.innerHTML += `
+
+    <div class="mensaje ia">
+
+        ${datos.respuesta}
+
+    </div>
+
+`
 
             loader.classList.add("oculto")
 
-            respuestaDiv.innerHTML = datos.respuesta
             const voz = new SpeechSynthesisUtterance(datos.respuesta)
 
 voz.lang = "es-ES"
@@ -139,23 +158,27 @@ speechSynthesis.speak(voz)
             // MOSTRAR GRÁFICA
             // =========================
 
-            if (datos.grafica) {
+if (datos.grafica) {
 
-                respuestaDiv.innerHTML += `
+    chat.innerHTML += `
 
-                    <br><br>
+        <div class="mensaje ia">
 
-                    <img
-                        src="data:image/png;base64,${datos.grafica}"
-                        style="
-                            width:100%;
-                            border-radius:20px;
-                            margin-top:20px;
-                        "
-                    >
-                `
-            }
+            <img
+                src="data:image/png;base64,${datos.grafica}"
+                style="
+                    width:100%;
+                    border-radius:20px;
+                    margin-top:10px;
+                "
+            >
 
+        </div>
+
+    `
+}
+
+chat.scrollTop = chat.scrollHeight
         } catch(error) {
 
             loader.classList.add("oculto")
@@ -163,6 +186,7 @@ speechSynthesis.speak(voz)
             respuestaDiv.innerHTML = "Error de conexión"
         }
     }
+    
  // =====================================
 // VOZ
 // =====================================
