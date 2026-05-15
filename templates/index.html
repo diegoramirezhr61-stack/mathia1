@@ -11,11 +11,13 @@
 </head>
 
 <body>
-
+<button class="menu-btn" onclick="toggleSidebar()">
+    ☰
+</button>
 <div class="app">
 
     <!-- SIDEBAR -->
-    <aside class="sidebar">
+   <aside class="sidebar" id="sidebar">
 
         <div class="logo">
             <div class="logo-icon">∑</div>
@@ -397,6 +399,12 @@ function escucharVoz() {
 
         usarVoz = false;
     };
+}
+function toggleSidebar(){
+
+    const sidebar = document.getElementById("sidebar");
+
+    sidebar.classList.toggle("sidebar-activo");
 }
 
 </script>
