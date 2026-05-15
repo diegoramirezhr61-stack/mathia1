@@ -10,7 +10,6 @@ from sympy import *
 import io
 import base64
 import PyPDF2
-import re
 
 app = Flask(__name__)
 app.secret_key = "mathia_secret"
@@ -26,7 +25,7 @@ if not api_key:
 cliente = Groq(api_key=api_key)
 
 # =========================
-# INIT SESSION DATA
+# INIT SESSION
 # =========================
 
 def init_session():
@@ -95,7 +94,7 @@ def buscar_chunks(pregunta, chunks, top_k=3):
 
 
 # =========================
-# NORMALIZAR FUNCIÓN
+# NORMALIZAR FUNCION
 # =========================
 
 def normalizar_funcion(texto):
@@ -107,19 +106,18 @@ def normalizar_funcion(texto):
 
     texto = texto.strip()
 
-    # traducciones
     texto = texto.replace("x al cuadrado", "x^2")
     texto = texto.replace("x al cubo", "x^3")
     texto = texto.replace("al cuadrado", "^2")
     texto = texto.replace("al cubo", "^3")
 
-    texto = texto.replace("^", "**")
-    texto = texto.replace("²", "**2")
-    texto = texto.replace("³", "**3")
-
     texto = texto.replace("seno", "sin")
     texto = texto.replace("coseno", "cos")
     texto = texto.replace("tangente", "tan")
+
+    texto = texto.replace("^", "**")
+    texto = texto.replace("²", "**2")
+    texto = texto.replace("³", "**3")
 
     return texto
 
@@ -202,7 +200,7 @@ def generar_grafica(funcion):
         return base64.b64encode(img.getvalue()).decode()
 
     except Exception as e:
-        print("Error grafica:", e)
+        print("ERROR GRAFICA:", e)
         return None
 
 
@@ -248,7 +246,6 @@ def preguntar():
         session["contador_preguntas"] += 1
 
         texto = pregunta.lower()
-
         palabras_grafica = ["grafica", "gráfica", "plot", "dibujar", "dibújame"]
 
         es_grafica = any(p in texto for p in palabras_grafica)
@@ -261,18 +258,26 @@ def preguntar():
         respuesta = preguntar_ia(pregunta)
 
         # =========================
-        # GRÁFICA (SI APLICA)
+        # GRAFICA SEGURA
         # =========================
         if es_grafica:
-
-            funcion = normalizar_funcion(pregunta)
-
-            if not funcion:
-                funcion = "x**2"
-
             try:
+                funcion = normalizar_funcion(pregunta)
+
+                funcion = funcion.lower()
+                for p in palabras_grafica:
+                    funcion = funcion.replace(p, "")
+
+                funcion = funcion.strip()
+
+                if funcion == "" or len(funcion) < 2:
+                    funcion = "x**2"
+
+                if "import" in funcion or "__" in funcion:
+                    funcion = "x**2"
+
                 x = symbols("x")
-                expr = sympify(funcion)
+                expr = sympify(funcion, evaluate=True)
                 f = lambdify(x, expr, "numpy")
 
                 xs = np.linspace(-10, 10, 400)
@@ -296,26 +301,21 @@ def preguntar():
 
             except Exception as e:
                 print("ERROR GRAFICA:", e)
+                grafica = None
 
         return jsonify({
             "respuesta": respuesta,
-            "grafica": grafica,
-            "preguntas": session["contador_preguntas"],
-            "graficas": len(session["historial_graficas"])
+            "grafica": grafica
         })
 
     except Exception as e:
         print("ERROR GENERAL:", e)
 
         return jsonify({
-            "respuesta": "Error en el servidor",
+            "respuesta": "Error en servidor",
             "grafica": None
         })
 
-
-# =========================
-# DASHBOARD API
-# =========================
 
 @app.route("/dashboard")
 def dashboard():
@@ -326,6 +326,7 @@ def dashboard():
         "graficas_generadas": len(session["historial_graficas"]),
         "memoria_chat": len(session["memoria_chat"])
     })
+
 
 # =========================
 # RUN
