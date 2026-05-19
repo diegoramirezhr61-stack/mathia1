@@ -153,10 +153,19 @@ document.getElementById("imagenInput")
 
 </script>
 
-        <button class="icon-btn"
-        onclick="document.getElementById('imagenInput').click()">
-        📷
-        </button>
+        <input
+type="file"
+id="imagenInput"
+accept="image/*"
+hidden
+onchange="analizarImagen()"
+>
+
+<button
+class="icon-btn"
+onclick="document.getElementById('imagenInput').click()">
+📷
+</button>
 
         <!-- PDF -->
 
@@ -442,6 +451,60 @@ document.getElementById("imagenInput")
 
 });
 
+async function analizarImagen() {
+
+    const input = document.getElementById("imagenInput");
+
+    const archivo = input.files[0];
+
+    if (!archivo) {
+        alert("Selecciona una imagen");
+        return;
+    }
+
+    agregarMensaje(
+        "📷 Analizando imagen matemática...",
+        "ia"
+    );
+
+    const formData = new FormData();
+
+    formData.append("imagen", archivo);
+
+    try {
+
+        const respuesta = await fetch(
+            "/resolver_imagen",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const datos = await respuesta.json();
+
+        agregarMensaje(
+            "📸 Texto detectado:\n\n" +
+            datos.texto_detectado,
+            "ia"
+        );
+
+        agregarMensaje(
+            datos.respuesta,
+            "ia"
+        );
+
+    } catch(error){
+
+        agregarMensaje(
+            "❌ Error leyendo imagen",
+            "ia"
+        );
+    }
+
+    input.value = "";
+}
+
 // =========================
 // ENVIAR
 // =========================
@@ -541,6 +604,7 @@ async function enviarPregunta() {
         );
     }
 }
+
 
 // =========================
 // ENTER
