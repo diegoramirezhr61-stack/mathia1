@@ -25,7 +25,7 @@ app = Flask(__name__)
 app.secret_key = "mathia_secret"
 
 # ================================
-# APIs
+# API KEYS
 # ================================
 
 GROQ_KEY = os.getenv("GROQ_API_KEY")
@@ -40,8 +40,6 @@ if not GEMINI_KEY:
 cliente = Groq(api_key=GROQ_KEY)
 
 genai.configure(api_key=GEMINI_KEY)
-
-modelo_gemini = genai.GenerativeModel("gemini-pro-vision")
 
 # ================================
 # SESSION
@@ -59,43 +57,6 @@ def init_session():
 
     if "historial_graficas" not in session:
         session["historial_graficas"] = []
-
-# ================================
-# PDF
-# ================================
-
-def leer_pdf(archivo):
-    try:
-        lector = PyPDF2.PdfReader(archivo)
-        texto = ""
-
-        for pagina in lector.pages:
-            contenido = pagina.extract_text()
-            if contenido:
-                texto += contenido + "\n"
-
-        return texto.strip()
-
-    except Exception as e:
-        print("ERROR PDF:", e)
-        return ""
-
-def dividir_texto(texto, max_chars=800):
-    palabras = texto.split()
-    chunks = []
-    actual = ""
-
-    for palabra in palabras:
-        if len(actual) + len(palabra) < max_chars:
-            actual += " " + palabra
-        else:
-            chunks.append(actual.strip())
-            actual = palabra
-
-    if actual:
-        chunks.append(actual.strip())
-
-    return chunks
 
 # ================================
 # IA GROQ
@@ -136,25 +97,23 @@ def preguntar_ia(prompt):
     return texto
 
 # ================================
-# GEMINI VISION (FIX REAL)
+# 🔥 GEMINI FIX REAL (IMAGENES)
 # ================================
 
 def analizar_imagen_con_ia(imagen):
 
     try:
-        img_bytes = imagen.read()
+        # ⚡ IMPORTANTE: reset stream
+        imagen.stream.seek(0)
 
-        response = modelo_gemini.generate_content([
-            {
-                "role": "user",
-                "parts": [
-                    "Resuelve el ejercicio matemático paso a paso usando LaTeX.",
-                    {
-                        "mime_type": "image/png",
-                        "data": img_bytes
-                    }
-                ]
-            }
+        img = Image.open(imagen)
+        img = img.convert("RGB")
+
+        model = genai.GenerativeModel("gemini-1.5-flash")
+
+        response = model.generate_content([
+            "Resuelve este ejercicio matemático paso a paso con explicación clara y LaTeX.",
+            img
         ])
 
         return response.text
@@ -162,6 +121,25 @@ def analizar_imagen_con_ia(imagen):
     except Exception as e:
         print("ERROR GEMINI:", e)
         return "No pude analizar la imagen."
+
+# ================================
+# PDF
+# ================================
+
+def leer_pdf(archivo):
+    try:
+        lector = PyPDF2.PdfReader(archivo)
+        texto = ""
+
+        for pagina in lector.pages:
+            contenido = pagina.extract_text()
+            if contenido:
+                texto += contenido + "\n"
+
+        return texto.strip()
+
+    except:
+        return ""
 
 # ================================
 # GRAFICAS
@@ -202,23 +180,22 @@ def generar_grafica(funcion):
         return None
 
 # ================================
-# ROUTER (CEREBRO)
+# ROUTER
 # ================================
 
 def router(pregunta, imagen=None):
 
     texto = pregunta.lower()
 
-    # 🖼️ Imagen
+    # 🖼️ IMAGEN
     if imagen:
         return {
             "respuesta": analizar_imagen_con_ia(imagen),
             "grafica": None
         }
 
-    # 📊 Gráficas
+    # 📊 GRAFICAS
     if any(x in texto for x in ["grafica", "gráfica", "plot", "dibujar"]):
-
         funcion = pregunta.lower()
         funcion = funcion.replace("grafica", "").replace("gráfica", "")
 
@@ -229,12 +206,7 @@ def router(pregunta, imagen=None):
             "grafica": grafica
         }
 
-    # 📄 PDF contexto
-    if session.get("pdf_chunks"):
-        contexto = " ".join(session["pdf_chunks"][:3])
-        pregunta = f"{pregunta}\nContexto PDF:\n{contexto}"
-
-    # 💬 IA normal
+    # 💬 IA NORMAL
     return {
         "respuesta": preguntar_ia(pregunta),
         "grafica": None
@@ -272,48 +244,16 @@ def resolver_imagen():
 
         imagen = request.files["imagen"]
 
-        respuesta = router("", imagen=imagen)
+        resultado = router("", imagen=imagen)
 
         return jsonify({
-            "texto_detectado": "Imagen procesada",
-            "respuesta": respuesta["respuesta"]
+            "texto_detectado": "Imagen analizada con Gemini",
+            "respuesta": resultado["respuesta"]
         })
 
     except Exception as e:
         print("ERROR IMAGEN:", e)
         return jsonify({"respuesta": "Error analizando imagen"})
-
-@app.route("/subir_pdf", methods=["POST"])
-def subir_pdf():
-
-    init_session()
-
-    try:
-        if "pdf" not in request.files:
-            return jsonify({"mensaje": "No PDF"})
-
-        archivo = request.files["pdf"]
-        texto = leer_pdf(archivo)
-
-        chunks = dividir_texto(texto)
-        session["pdf_chunks"] = chunks
-
-        return jsonify({"mensaje": f"PDF cargado: {len(chunks)} fragmentos"})
-
-    except Exception as e:
-        print("ERROR PDF:", e)
-        return jsonify({"mensaje": "Error PDF"})
-
-@app.route("/dashboard")
-def dashboard():
-
-    init_session()
-
-    return jsonify({
-        "preguntas": session["contador_preguntas"],
-        "graficas": len(session["historial_graficas"]),
-        "memoria": len(session["memoria_chat"])
-    })
 
 # ================================
 # RUN
@@ -321,5 +261,4 @@ def dashboard():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-
     app.run(host="0.0.0.0", port=port)
