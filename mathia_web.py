@@ -267,18 +267,28 @@ def generar_grafica(funcion):
         return None
 
 # ========================================
-# OCR
+# OCR IMAGEN
 # ========================================
 
 def leer_imagen_matematica(imagen):
 
     try:
 
+        # abrir imagen
         img = Image.open(imagen)
 
-        texto = pytesseract.image_to_string(img)
+        # convertir a RGB
+        img = img.convert("RGB")
 
-        return texto
+        # OCR
+        texto = pytesseract.image_to_string(
+            img,
+            config='--psm 6'
+        )
+
+        print("TEXTO OCR:", texto)
+
+        return texto.strip()
 
     except Exception as e:
 
