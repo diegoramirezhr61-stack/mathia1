@@ -1,9 +1,11 @@
 flask
-gunicorn
 groq
+gunicorn
+sympy
 matplotlib
 numpy
-sympy
+requests 
 PyPDF2
 pytesseract
 pillow
+opencv-python-headless
