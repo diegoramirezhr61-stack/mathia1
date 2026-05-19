@@ -1,10 +1,9 @@
 from flask import Flask, render_template, request, jsonify, session
 from groq import Groq
-import os
 
-# =========================
-# MATPLOTLIB
-# =========================
+import os
+import io
+import base64
 
 import matplotlib
 matplotlib.use("Agg")
@@ -12,52 +11,24 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-# =========================
-# SYMPY
-# =========================
-
 from sympy import *
 
-# =========================
-# UTILS
-# =========================
-
-import io
-import base64
 import PyPDF2
-
-# =========================
-# OCR
-# =========================
-
 import pytesseract
-from PIL import Image
-import easyocr
 
-# =========================
+from PIL import Image
+
+# ========================================
 # APP
-# =========================
+# ========================================
 
 app = Flask(__name__)
+
 app.secret_key = "mathia_secret"
 
-# =========================
-# TESSERACT WINDOWS
-# =========================
-
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-)
-
-# =========================
-# EASY OCR
-# =========================
-
-lector_ocr = easyocr.Reader(['es', 'en'])
-
-# =========================
+# ========================================
 # GROQ
-# =========================
+# ========================================
 
 api_key = os.getenv("GROQ_API_KEY")
 
@@ -66,9 +37,9 @@ if not api_key:
 
 cliente = Groq(api_key=api_key)
 
-# =========================
+# ========================================
 # SESSION
-# =========================
+# ========================================
 
 def init_session():
 
@@ -78,18 +49,15 @@ def init_session():
     if "pdf_chunks" not in session:
         session["pdf_chunks"] = []
 
-    if "modo_pdf" not in session:
-        session["modo_pdf"] = False
+    if "contador_preguntas" not in session:
+        session["contador_preguntas"] = 0
 
     if "historial_graficas" not in session:
         session["historial_graficas"] = []
 
-    if "contador_preguntas" not in session:
-        session["contador_preguntas"] = 0
-
-# =========================
-# PDF
-# =========================
+# ========================================
+# LEER PDF
+# ========================================
 
 def leer_pdf(archivo):
 
@@ -114,6 +82,10 @@ def leer_pdf(archivo):
 
         return ""
 
+# ========================================
+# DIVIDIR TEXTO
+# ========================================
+
 def dividir_texto(texto, max_chars=800):
 
     palabras = texto.split()
@@ -122,50 +94,26 @@ def dividir_texto(texto, max_chars=800):
 
     actual = ""
 
-    for p in palabras:
+    for palabra in palabras:
 
-        if len(actual) + len(p) < max_chars:
+        if len(actual) + len(palabra) < max_chars:
 
-            actual += " " + p
+            actual += " " + palabra
 
         else:
 
             chunks.append(actual.strip())
 
-            actual = p
+            actual = palabra
 
     if actual:
         chunks.append(actual.strip())
 
     return chunks
 
-def buscar_chunks(pregunta, chunks, top_k=3):
-
-    pregunta = pregunta.lower()
-
-    palabras = set(pregunta.split())
-
-    scores = []
-
-    for c in chunks:
-
-        score = sum(
-            1 for p in palabras
-            if p in c.lower()
-        )
-
-        scores.append((score, c))
-
-    scores.sort(
-        reverse=True,
-        key=lambda x: x[0]
-    )
-
-    return [c[1] for c in scores[:top_k]]
-
-# =========================
+# ========================================
 # NORMALIZAR FUNCION
-# =========================
+# ========================================
 
 def normalizar_funcion(texto):
 
@@ -179,12 +127,11 @@ def normalizar_funcion(texto):
         "dibújame"
     ]
 
-    for p in borrar:
-        texto = texto.replace(p, "")
+    for palabra in borrar:
+        texto = texto.replace(palabra, "")
 
     texto = texto.strip()
 
-    # lenguaje natural
     texto = texto.replace("x al cuadrado", "x^2")
     texto = texto.replace("x al cubo", "x^3")
 
@@ -196,14 +143,15 @@ def normalizar_funcion(texto):
     texto = texto.replace("tangente", "tan")
 
     texto = texto.replace("^", "**")
+
     texto = texto.replace("²", "**2")
     texto = texto.replace("³", "**3")
 
     return texto
 
-# =========================
+# ========================================
 # IA
-# =========================
+# ========================================
 
 def preguntar_ia(prompt):
 
@@ -221,8 +169,11 @@ IMPORTANTE:
 Cuando escribas fórmulas matemáticas usa formato LaTeX.
 
 Ejemplos:
+
 $x^2$
+
 $\\frac{a}{b}$
+
 $\\int x^2 dx$
 
 Usa SIEMPRE símbolos matemáticos bien formateados.
@@ -232,48 +183,24 @@ Usa SIEMPRE símbolos matemáticos bien formateados.
 
     mensajes.extend(session["memoria_chat"])
 
-    # =========================
-    # CONTEXTO PDF
-    # =========================
-
-    if session["modo_pdf"] and session["pdf_chunks"]:
-
-        relevantes = buscar_chunks(
-            prompt,
-            session["pdf_chunks"]
-        )
-
-        contexto = "\n\n".join(relevantes)
-
-        contenido = f"""
-DOCUMENTO:
-
-{contexto}
-
-PREGUNTA:
-
-{prompt}
-"""
-
-    else:
-
-        contenido = prompt
-
     mensajes.append({
         "role": "user",
-        "content": contenido
+        "content": prompt
     })
 
     respuesta = cliente.chat.completions.create(
+
         model="llama-3.1-8b-instant",
+
         messages=mensajes,
+
         temperature=0.3,
+
         max_tokens=800
     )
 
     texto = respuesta.choices[0].message.content
 
-    # memoria
     session["memoria_chat"].append({
         "role": "user",
         "content": prompt
@@ -284,15 +211,13 @@ PREGUNTA:
         "content": texto
     })
 
-    session["memoria_chat"] = (
-        session["memoria_chat"][-10:]
-    )
+    session["memoria_chat"] = session["memoria_chat"][-10:]
 
     return texto
 
-# =========================
+# ========================================
 # GRAFICAS
-# =========================
+# ========================================
 
 def generar_grafica(funcion):
 
@@ -301,38 +226,31 @@ def generar_grafica(funcion):
         if not funcion:
             funcion = "x**2"
 
-        # seguridad
-        if "__" in funcion or "import" in funcion:
-            funcion = "x**2"
-
         funcion = funcion.replace("^", "**")
 
         x = symbols("x")
 
-        expr = sympify(funcion)
+        expr = sympify(funcion, evaluate=False)
 
         f = lambdify(x, expr, "numpy")
 
-        xs = np.linspace(-10, 10, 500)
+        xs = np.linspace(-10, 10, 400)
 
         ys = f(xs)
 
-        plt.figure(figsize=(6,4))
+        plt.figure(figsize=(7,5))
 
         plt.plot(xs, ys)
 
         plt.axhline(0)
+
         plt.axvline(0)
 
-        plt.grid(True)
+        plt.grid()
 
         img = io.BytesIO()
 
-        plt.savefig(
-            img,
-            format="png",
-            bbox_inches="tight"
-        )
+        plt.savefig(img, format="png")
 
         plt.close()
 
@@ -348,9 +266,9 @@ def generar_grafica(funcion):
 
         return None
 
-# =========================
+# ========================================
 # OCR
-# =========================
+# ========================================
 
 def leer_imagen_matematica(imagen):
 
@@ -358,30 +276,9 @@ def leer_imagen_matematica(imagen):
 
         img = Image.open(imagen)
 
-        # =========================
-        # TESSERACT
-        # =========================
+        texto = pytesseract.image_to_string(img)
 
-        texto = pytesseract.image_to_string(
-            img,
-            lang='eng'
-        )
-
-        # =========================
-        # EASYOCR FALLBACK
-        # =========================
-
-        if len(texto.strip()) < 2:
-
-            resultado = lector_ocr.readtext(
-                np.array(img)
-            )
-
-            texto = " ".join(
-                [x[1] for x in resultado]
-            )
-
-        return texto.strip()
+        return texto
 
     except Exception as e:
 
@@ -389,9 +286,9 @@ def leer_imagen_matematica(imagen):
 
         return ""
 
-# =========================
+# ========================================
 # HOME
-# =========================
+# ========================================
 
 @app.route("/")
 def home():
@@ -400,9 +297,88 @@ def home():
 
     return render_template("index.html")
 
-# =========================
+# ========================================
+# PREGUNTAR
+# ========================================
+
+@app.route("/preguntar", methods=["POST"])
+def preguntar():
+
+    init_session()
+
+    try:
+
+        data = request.get_json()
+
+        pregunta = data.get("pregunta", "")
+
+        texto = pregunta.lower()
+
+        palabras = [
+            "grafica",
+            "gráfica",
+            "plot",
+            "dibujar",
+            "dibújame"
+        ]
+
+        es_grafica = any(
+            p in texto for p in palabras
+        )
+
+        grafica = None
+
+        # ========================================
+        # GRAFICA
+        # ========================================
+
+        if es_grafica:
+
+            funcion = normalizar_funcion(pregunta)
+
+            if not funcion:
+                funcion = "x**2"
+
+            grafica = generar_grafica(funcion)
+
+            session["historial_graficas"].append(
+                grafica
+            )
+
+            session["historial_graficas"] = (
+                session["historial_graficas"][-10:]
+            )
+
+            return jsonify({
+                "respuesta": "Gráfica generada correctamente.",
+                "grafica": grafica
+            })
+
+        # ========================================
+        # IA
+        # ========================================
+
+        respuesta = preguntar_ia(pregunta)
+
+        session["contador_preguntas"] += 1
+
+        return jsonify({
+            "respuesta": respuesta,
+            "grafica": None
+        })
+
+    except Exception as e:
+
+        print("ERROR GENERAL:", e)
+
+        return jsonify({
+            "respuesta": "Error en servidor",
+            "grafica": None
+        })
+
+# ========================================
 # SUBIR PDF
-# =========================
+# ========================================
 
 @app.route("/subir_pdf", methods=["POST"])
 def subir_pdf():
@@ -421,18 +397,18 @@ def subir_pdf():
 
         texto = leer_pdf(archivo)
 
-        if len(texto) < 20:
+        if not texto:
 
             return jsonify({
-                "mensaje": "PDF vacío"
+                "mensaje": "No pude leer el PDF"
             })
 
-        session["pdf_chunks"] = dividir_texto(texto)
+        chunks = dividir_texto(texto)
 
-        session["modo_pdf"] = True
+        session["pdf_chunks"] = chunks
 
         return jsonify({
-            "mensaje": "PDF cargado correctamente"
+            "mensaje": f"PDF cargado correctamente. {len(chunks)} fragmentos detectados."
         })
 
     except Exception as e:
@@ -443,86 +419,9 @@ def subir_pdf():
             "mensaje": "Error procesando PDF"
         })
 
-# =========================
-# PREGUNTAR
-# =========================
-
-@app.route("/preguntar", methods=["POST"])
-def preguntar():
-
-    init_session()
-
-    try:
-
-        data = request.get_json()
-
-        pregunta = data.get("pregunta", "")
-
-        session["contador_preguntas"] += 1
-
-        texto = pregunta.lower()
-
-        palabras_grafica = [
-            "grafica",
-            "gráfica",
-            "plot",
-            "dibujar",
-            "dibújame"
-        ]
-
-        es_grafica = any(
-            p in texto
-            for p in palabras_grafica
-        )
-
-        # =========================
-        # GRAFICA
-        # =========================
-
-        if es_grafica:
-
-            funcion = normalizar_funcion(
-                pregunta
-            )
-
-            grafica = generar_grafica(
-                funcion
-            )
-
-            return jsonify({
-                "respuesta": f"""
-He generado la gráfica de:
-
-${funcion.replace('**','^')}$
-""",
-                "grafica": grafica
-            })
-
-        # =========================
-        # IA NORMAL
-        # =========================
-
-        respuesta = preguntar_ia(
-            pregunta
-        )
-
-        return jsonify({
-            "respuesta": respuesta,
-            "grafica": None
-        })
-
-    except Exception as e:
-
-        print("ERROR GENERAL:", e)
-
-        return jsonify({
-            "respuesta": "Error en servidor",
-            "grafica": None
-        })
-
-# =========================
-# ANALIZAR IMAGEN
-# =========================
+# ========================================
+# RESOLVER IMAGEN
+# ========================================
 
 @app.route("/resolver_imagen", methods=["POST"])
 def resolver_imagen():
@@ -537,9 +436,7 @@ def resolver_imagen():
 
         imagen = request.files["imagen"]
 
-        texto = leer_imagen_matematica(
-            imagen
-        )
+        texto = leer_imagen_matematica(imagen)
 
         if not texto:
 
@@ -556,7 +453,9 @@ Resuelve paso a paso este ejercicio matemático:
         respuesta = preguntar_ia(prompt)
 
         return jsonify({
+
             "texto_detectado": texto,
+
             "respuesta": respuesta
         })
 
@@ -568,9 +467,9 @@ Resuelve paso a paso este ejercicio matemático:
             "respuesta": "Error analizando imagen"
         })
 
-# =========================
+# ========================================
 # DASHBOARD
-# =========================
+# ========================================
 
 @app.route("/dashboard")
 def dashboard():
@@ -578,28 +477,26 @@ def dashboard():
     init_session()
 
     return jsonify({
+
         "preguntas_totales":
-            session["contador_preguntas"],
+        session["contador_preguntas"],
 
         "graficas_generadas":
-            len(session["historial_graficas"]),
+        len(session["historial_graficas"]),
 
-        "memoria_chat":
-            len(session["memoria_chat"])
+        "mensajes_memoria":
+        len(session["memoria_chat"])
     })
 
-# =========================
+# ========================================
 # RUN
-# =========================
+# ========================================
 
 if __name__ == "__main__":
 
-    port = int(
-        os.environ.get("PORT", 10000)
-    )
+    port = int(os.environ.get("PORT", 10000))
 
     app.run(
         host="0.0.0.0",
-        port=port,
-        debug=True
+        port=port
     )
