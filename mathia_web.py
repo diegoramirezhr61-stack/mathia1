@@ -13,48 +13,41 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sympy import *
-import io
-import base64
-import PyPDF2
 
 from PIL import Image
+import PyPDF2
 
-#===============================
+# ================================
 # APP
-# ========================================
+# ================================
 
 app = Flask(__name__)
-
 app.secret_key = "mathia_secret"
 
-# ========================================
-# GROQ
-# ========================================
+# ================================
+# APIs
+# ================================
 
-api_key = os.getenv("GROQ_API_KEY")
-# =========================
-# GEMINI
-# =========================
+GROQ_KEY = os.getenv("GROQ_API_KEY")
+GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 
-genai.configure(
-    api_key=os.getenv("GEMINI_API_KEY")
-)
-
-modelo_gemini = genai.GenerativeModel(
-    "gemini-1.5-flash"
-)
-
-if not api_key:
+if not GROQ_KEY:
     raise Exception("Falta GROQ_API_KEY")
 
-cliente = Groq(api_key=api_key)
+if not GEMINI_KEY:
+    raise Exception("Falta GEMINI_API_KEY")
 
-# ========================================
+cliente = Groq(api_key=GROQ_KEY)
+
+genai.configure(api_key=GEMINI_KEY)
+
+modelo_gemini = genai.GenerativeModel("gemini-1.5-flash")
+
+# ================================
 # SESSION
-# ========================================
+# ================================
 
 def init_session():
-
     if "memoria_chat" not in session:
         session["memoria_chat"] = []
 
@@ -67,55 +60,36 @@ def init_session():
     if "historial_graficas" not in session:
         session["historial_graficas"] = []
 
-# ========================================
-# LEER PDF
-# ========================================
+# ================================
+# PDF
+# ================================
 
 def leer_pdf(archivo):
-
     try:
-
         lector = PyPDF2.PdfReader(archivo)
-
         texto = ""
 
         for pagina in lector.pages:
-
             contenido = pagina.extract_text()
-
             if contenido:
                 texto += contenido + "\n"
 
         return texto.strip()
 
     except Exception as e:
-
         print("ERROR PDF:", e)
-
         return ""
 
-# ========================================
-# DIVIDIR TEXTO
-# ========================================
-
 def dividir_texto(texto, max_chars=800):
-
     palabras = texto.split()
-
     chunks = []
-
     actual = ""
 
     for palabra in palabras:
-
         if len(actual) + len(palabra) < max_chars:
-
             actual += " " + palabra
-
         else:
-
             chunks.append(actual.strip())
-
             actual = palabra
 
     if actual:
@@ -123,47 +97,9 @@ def dividir_texto(texto, max_chars=800):
 
     return chunks
 
-# ========================================
-# NORMALIZAR FUNCION
-# ========================================
-
-def normalizar_funcion(texto):
-
-    texto = texto.lower()
-
-    borrar = [
-        "grafica",
-        "gráfica",
-        "plot",
-        "dibujar",
-        "dibújame"
-    ]
-
-    for palabra in borrar:
-        texto = texto.replace(palabra, "")
-
-    texto = texto.strip()
-
-    texto = texto.replace("x al cuadrado", "x^2")
-    texto = texto.replace("x al cubo", "x^3")
-
-    texto = texto.replace("al cuadrado", "^2")
-    texto = texto.replace("al cubo", "^3")
-
-    texto = texto.replace("seno", "sin")
-    texto = texto.replace("coseno", "cos")
-    texto = texto.replace("tangente", "tan")
-
-    texto = texto.replace("^", "**")
-
-    texto = texto.replace("²", "**2")
-    texto = texto.replace("³", "**3")
-
-    return texto
-
-# ========================================
-# IA
-# ========================================
+# ================================
+# IA GROQ
+# ================================
 
 def preguntar_ia(prompt):
 
@@ -172,24 +108,7 @@ def preguntar_ia(prompt):
     mensajes = [
         {
             "role": "system",
-            "content": """
-Eres MathIA.
-
-Explicas matemáticas paso a paso.
-
-IMPORTANTE:
-Cuando escribas fórmulas matemáticas usa formato LaTeX.
-
-Ejemplos:
-
-$x^2$
-
-$\\frac{a}{b}$
-
-$\\int x^2 dx$
-
-Usa SIEMPRE símbolos matemáticos bien formateados.
-"""
+            "content": "Eres MathIA, explicas matemáticas paso a paso con LaTeX."
         }
     ]
 
@@ -201,201 +120,168 @@ Usa SIEMPRE símbolos matemáticos bien formateados.
     })
 
     respuesta = cliente.chat.completions.create(
-
         model="llama-3.1-8b-instant",
-
         messages=mensajes,
-
         temperature=0.3,
-
         max_tokens=800
     )
 
     texto = respuesta.choices[0].message.content
 
-    session["memoria_chat"].append({
-        "role": "user",
-        "content": prompt
-    })
-
-    session["memoria_chat"].append({
-        "role": "assistant",
-        "content": texto
-    })
+    session["memoria_chat"].append({"role": "user", "content": prompt})
+    session["memoria_chat"].append({"role": "assistant", "content": texto})
 
     session["memoria_chat"] = session["memoria_chat"][-10:]
 
     return texto
 
-# ========================================
+# ================================
+# GEMINI VISION (FIX REAL)
+# ================================
+
+def analizar_imagen_con_ia(imagen):
+
+    try:
+        img_bytes = imagen.read()
+
+        response = modelo_gemini.generate_content([
+            {
+                "role": "user",
+                "parts": [
+                    "Resuelve el ejercicio matemático paso a paso usando LaTeX.",
+                    {
+                        "mime_type": "image/png",
+                        "data": img_bytes
+                    }
+                ]
+            }
+        ])
+
+        return response.text
+
+    except Exception as e:
+        print("ERROR GEMINI:", e)
+        return "No pude analizar la imagen."
+
+# ================================
 # GRAFICAS
-# ========================================
+# ================================
 
 def generar_grafica(funcion):
 
     try:
-
         if not funcion:
             funcion = "x**2"
 
         funcion = funcion.replace("^", "**")
 
         x = symbols("x")
-
-        expr = sympify(funcion, evaluate=False)
+        expr = sympify(funcion)
 
         f = lambdify(x, expr, "numpy")
 
         xs = np.linspace(-10, 10, 400)
-
         ys = f(xs)
 
         plt.figure(figsize=(7,5))
-
         plt.plot(xs, ys)
-
         plt.axhline(0)
-
         plt.axvline(0)
-
         plt.grid()
 
         img = io.BytesIO()
-
         plt.savefig(img, format="png")
-
         plt.close()
 
         img.seek(0)
 
-        return base64.b64encode(
-            img.getvalue()
-        ).decode()
+        return base64.b64encode(img.getvalue()).decode()
 
     except Exception as e:
-
         print("ERROR GRAFICA:", e)
-
         return None
-def analizar_imagen_con_ia(imagen):
 
-    try:
+# ================================
+# ROUTER (CEREBRO)
+# ================================
 
-        img = Image.open(imagen)
+def router(pregunta, imagen=None):
 
-        respuesta = modelo_gemini.generate_content([
-            """
-Lee el ejercicio matemático de la imagen.
+    texto = pregunta.lower()
 
-Luego:
-1. identifica el problema
-2. resuélvelo paso a paso
-3. usa formato matemático LaTeX
-4. explica claramente
-""",
-            img
-        ])
+    # 🖼️ Imagen
+    if imagen:
+        return {
+            "respuesta": analizar_imagen_con_ia(imagen),
+            "grafica": None
+        }
 
-        return respuesta.text
+    # 📊 Gráficas
+    if any(x in texto for x in ["grafica", "gráfica", "plot", "dibujar"]):
 
-    except Exception as e:
+        funcion = pregunta.lower()
+        funcion = funcion.replace("grafica", "").replace("gráfica", "")
 
-        print("ERROR GEMINI:", e)
+        grafica = generar_grafica(funcion)
 
-        return "No pude analizar la imagen."
-# ========================================
-# HOME
-# ========================================
+        return {
+            "respuesta": "Gráfica generada correctamente.",
+            "grafica": grafica
+        }
+
+    # 📄 PDF contexto
+    if session.get("pdf_chunks"):
+        contexto = " ".join(session["pdf_chunks"][:3])
+        pregunta = f"{pregunta}\nContexto PDF:\n{contexto}"
+
+    # 💬 IA normal
+    return {
+        "respuesta": preguntar_ia(pregunta),
+        "grafica": None
+    }
+
+# ================================
+# ROUTES
+# ================================
 
 @app.route("/")
 def home():
-
     init_session()
-
     return render_template("index.html")
-
-# ========================================
-# PREGUNTAR
-# ========================================
 
 @app.route("/preguntar", methods=["POST"])
 def preguntar():
 
     init_session()
 
+    data = request.get_json()
+    pregunta = data.get("pregunta", "")
+
+    resultado = router(pregunta)
+
+    session["contador_preguntas"] += 1
+
+    return jsonify(resultado)
+
+@app.route("/resolver_imagen", methods=["POST"])
+def resolver_imagen():
+
     try:
+        if "imagen" not in request.files:
+            return jsonify({"respuesta": "No se recibió imagen"})
 
-        data = request.get_json()
+        imagen = request.files["imagen"]
 
-        pregunta = data.get("pregunta", "")
-
-        texto = pregunta.lower()
-
-        palabras = [
-            "grafica",
-            "gráfica",
-            "plot",
-            "dibujar",
-            "dibújame"
-        ]
-
-        es_grafica = any(
-            p in texto for p in palabras
-        )
-
-        grafica = None
-
-        # ========================================
-        # GRAFICA
-        # ========================================
-
-        if es_grafica:
-
-            funcion = normalizar_funcion(pregunta)
-
-            if not funcion:
-                funcion = "x**2"
-
-            grafica = generar_grafica(funcion)
-
-            session["historial_graficas"].append(
-                grafica
-            )
-
-            session["historial_graficas"] = (
-                session["historial_graficas"][-10:]
-            )
-
-            return jsonify({
-                "respuesta": "Gráfica generada correctamente.",
-                "grafica": grafica
-            })
-
-        # ========================================
-        # IA
-        # ========================================
-
-        respuesta = preguntar_ia(pregunta)
-
-        session["contador_preguntas"] += 1
+        respuesta = router("", imagen=imagen)
 
         return jsonify({
-            "respuesta": respuesta,
-            "grafica": None
+            "texto_detectado": "Imagen procesada",
+            "respuesta": respuesta["respuesta"]
         })
 
     except Exception as e:
-
-        print("ERROR GENERAL:", e)
-
-        return jsonify({
-            "respuesta": "Error en servidor",
-            "grafica": None
-        })
-
-# ========================================
-# SUBIR PDF
-# ========================================
+        print("ERROR IMAGEN:", e)
+        return jsonify({"respuesta": "Error analizando imagen"})
 
 @app.route("/subir_pdf", methods=["POST"])
 def subir_pdf():
@@ -403,70 +289,20 @@ def subir_pdf():
     init_session()
 
     try:
-
         if "pdf" not in request.files:
-
-            return jsonify({
-                "mensaje": "No se recibió PDF"
-            })
+            return jsonify({"mensaje": "No PDF"})
 
         archivo = request.files["pdf"]
-
         texto = leer_pdf(archivo)
 
-        if not texto:
-
-            return jsonify({
-                "mensaje": "No pude leer el PDF"
-            })
-
         chunks = dividir_texto(texto)
-
         session["pdf_chunks"] = chunks
 
-        return jsonify({
-            "mensaje": f"PDF cargado correctamente. {len(chunks)} fragmentos detectados."
-        })
+        return jsonify({"mensaje": f"PDF cargado: {len(chunks)} fragmentos"})
 
     except Exception as e:
-
         print("ERROR PDF:", e)
-
-        return jsonify({
-            "mensaje": "Error procesando PDF"
-        })
-
-@app.route("/resolver_imagen", methods=["POST"])
-def resolver_imagen():
-
-    try:
-
-        if "imagen" not in request.files:
-
-            return jsonify({
-                "respuesta": "No se recibió imagen"
-            })
-
-        imagen = request.files["imagen"]
-
-        respuesta = analizar_imagen_con_ia(imagen)
-
-        return jsonify({
-            "texto_detectado": "Imagen analizada con Gemini",
-            "respuesta": respuesta
-        })
-
-    except Exception as e:
-
-        print("ERROR IMAGEN:", e)
-
-        return jsonify({
-            "respuesta": "Error analizando imagen"
-        })
-
-# ========================================
-# DASHBOARD
-# ========================================
+        return jsonify({"mensaje": "Error PDF"})
 
 @app.route("/dashboard")
 def dashboard():
@@ -474,26 +310,16 @@ def dashboard():
     init_session()
 
     return jsonify({
-
-        "preguntas_totales":
-        session["contador_preguntas"],
-
-        "graficas_generadas":
-        len(session["historial_graficas"]),
-
-        "mensajes_memoria":
-        len(session["memoria_chat"])
+        "preguntas": session["contador_preguntas"],
+        "graficas": len(session["historial_graficas"]),
+        "memoria": len(session["memoria_chat"])
     })
 
-# ========================================
+# ================================
 # RUN
-# ========================================
+# ================================
 
 if __name__ == "__main__":
-
     port = int(os.environ.get("PORT", 10000))
 
-    app.run(
-        host="0.0.0.0",
-        port=port
-    )
+    app.run(host="0.0.0.0", port=port)
