@@ -11,4 +11,4 @@ pillow
 opencv-python-headless
 torch
 torchvision
-easyocr
+
