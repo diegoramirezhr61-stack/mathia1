@@ -41,7 +41,7 @@ cliente = Groq(api_key=GROQ_KEY)
 
 genai.configure(api_key=GEMINI_KEY)
 
-modelo_gemini = genai.GenerativeModel("gemini-1.5-flash")
+modelo_gemini = genai.GenerativeModel("gemini-pro-vision")
 
 # ================================
 # SESSION
