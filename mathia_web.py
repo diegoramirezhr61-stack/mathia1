@@ -277,29 +277,54 @@ def generar_grafica(funcion):
 
         return None
 
-# ========================================
-# OCR MATEMÁTICO MEJORADO
-# ========================================
-
 def leer_imagen_matematica(imagen):
 
     try:
 
+        # =========================
+        # ABRIR IMAGEN
+        # =========================
+
         img = Image.open(imagen).convert("L")
 
+        # PIL -> NUMPY
         img = np.array(img)
+
+        # =========================
+        # MEJORAR OCR
+        # =========================
+
+        img = cv2.resize(
+            img,
+            None,
+            fx=2,
+            fy=2,
+            interpolation=cv2.INTER_CUBIC
+        )
+
+        img = cv2.GaussianBlur(
+            img,
+            (3,3),
+            0
+        )
 
         img = cv2.threshold(
             img,
-            150,
+            0,
             255,
-            cv2.THRESH_BINARY
+            cv2.THRESH_BINARY + cv2.THRESH_OTSU
         )[1]
+
+        # =========================
+        # OCR
+        # =========================
 
         texto = pytesseract.image_to_string(
             img,
             config='--psm 6'
         )
+
+        print("TEXTO OCR:", texto)
 
         return texto.strip()
 
