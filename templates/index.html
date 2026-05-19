@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MathIA</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>MathIA</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap"
+rel="stylesheet">
+
+<!-- MATHJAX -->
 <script>
 window.MathJax = {
     tex: {
@@ -23,116 +29,170 @@ window.MathJax = {
 id="MathJax-script"
 async
 src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
-
 </script>
+
 </head>
 
 <body>
+
+<!-- MENU MOBILE -->
 <button class="menu-btn" onclick="toggleSidebar()">
-    ☰
+☰
 </button>
+
 <div class="app">
 
-    <!-- SIDEBAR -->
-   <aside class="sidebar" id="sidebar">
+<!-- =========================
+SIDEBAR
+========================= -->
 
-        <div class="logo">
-            <div class="logo-icon">∑</div>
+<aside class="sidebar" id="sidebar">
 
-            <div>
-                <h2>MathIA</h2>
-                <p>Asistente matemático inteligente</p>
+    <div class="logo">
+
+        <div class="logo-icon">
+            ∑
+        </div>
+
+        <div>
+            <h2>MathIA</h2>
+            <p>Asistente matemático inteligente</p>
+        </div>
+
+    </div>
+
+    <div class="estado">
+        <span class="punto"></span>
+        Sistema activo
+    </div>
+
+    <!-- TEMAS -->
+
+    <div class="seccion">
+
+        <h3>TEMAS</h3>
+
+        <div class="tema">
+            📈 Cálculo diferencial
+        </div>
+
+        <div class="tema">
+            🧮 Álgebra lineal
+        </div>
+
+        <div class="tema">
+            📊 Estadística
+        </div>
+
+        <div class="tema">
+            📐 Geometría
+        </div>
+
+    </div>
+
+    <!-- STATS -->
+
+    <div class="seccion">
+
+        <h3>SESIÓN</h3>
+
+        <div class="stats">
+
+            <div class="card">
+                <h2 id="contadorPreguntas">0</h2>
+                <p>Preguntas</p>
             </div>
-        </div>
 
-        <div class="estado">
-            <span class="punto"></span>
-            Sistema activo
-        </div>
-
-        <!-- TEMAS -->
-        <div class="seccion">
-            <h3>TEMAS</h3>
-
-            <div class="tema">📈 Cálculo diferencial</div>
-            <div class="tema">🧮 Álgebra lineal</div>
-            <div class="tema">📊 Estadística</div>
-            <div class="tema">📐 Geometría</div>
-        </div>
-
-        <!-- STATS -->
-        <div class="seccion">
-            <h3>SESIÓN</h3>
-
-            <div class="stats">
-
-                <div class="card">
-                    <h2 id="contadorPreguntas">0</h2>
-                    <p>Preguntas</p>
-                </div>
-
-                <div class="card">
-                    <h2 id="contadorGraficas">0</h2>
-                    <p>Gráficas</p>
-                </div>
-
+            <div class="card">
+                <h2 id="contadorGraficas">0</h2>
+                <p>Gráficas</p>
             </div>
+
         </div>
 
-        <!-- HISTORIAL -->
-        <div class="seccion">
-            <h3>📊 Historial visual</h3>
+    </div>
 
-            <div id="historialGraficas"></div>
-        </div>
+</aside>
 
-    </aside>
+<!-- =========================
+CHAT
+========================= -->
+
+<main class="chat-container">
 
     <!-- CHAT -->
-    <main class="chat-container">
 
-        <!-- CHAT -->
-        <div id="chat" class="chat">
+    <div id="chat" class="chat">
 
-            <div class="mensaje ia">
-                👋 Hola, soy MathIA. Puedo ayudarte con cálculo, álgebra, matrices, PDFs y gráficas matemáticas.
-            </div>
-
+        <div class="mensaje ia">
+            👋 Hola, soy MathIA.
+            Puedo ayudarte con cálculo,
+            álgebra, matrices, PDFs,
+            gráficas matemáticas y fotos
+            de ejercicios.
         </div>
+
+    </div>
+
+    <!-- INPUT -->
+
+    <div class="input-area">
+
+        <!-- FOTO -->
+
+        <input
+        type="file"
+        id="imagenInput"
+        accept="image/*"
+        hidden>
+
+        <button class="icon-btn"
+        onclick="document.getElementById('imagenInput').click()">
+        📷
+        </button>
+
+        <!-- PDF -->
+
+        <input
+        type="file"
+        id="pdfInput"
+        accept=".pdf"
+        hidden>
+
+        <button class="icon-btn"
+        onclick="document.getElementById('pdfInput').click()">
+        📄
+        </button>
+
+        <button class="icon-btn"
+        onclick="subirPDF()">
+        ⬆
+        </button>
 
         <!-- INPUT -->
-        <div class="input-area">
 
-            <input type="file" id="pdfInput" accept=".pdf" hidden>
+        <textarea
+        id="pregunta"
+        placeholder="Escribe una pregunta matemática...">
+        </textarea>
 
-            <button class="icon-btn"
-                onclick="document.getElementById('pdfInput').click()">
-                📄
-            </button>
+        <!-- MICRO -->
 
-            <button class="icon-btn"
-                onclick="subirPDF()">
-                ⬆
-            </button>
+        <button class="icon-btn"
+        onclick="escucharVoz()">
+        🎤
+        </button>
 
-            <textarea
-                id="pregunta"
-                placeholder="Escribe una pregunta matemática..."
-            ></textarea>
+        <!-- ENVIAR -->
 
-            <button class="icon-btn"
-                onclick="escucharVoz()">
-                🎤
-            </button>
+        <button class="enviar-btn"
+        onclick="enviarPregunta()">
+        Enviar
+        </button>
 
-            <button class="enviar-btn"
-                onclick="enviarPregunta()">
-                Enviar
-            </button>
+    </div>
 
-        </div>
-
-    </main>
+</main>
 
 </div>
 
@@ -142,24 +202,24 @@ let usarVoz = false;
 let totalPreguntas = 0;
 let totalGraficas = 0;
 
-// ========================================
-// AGREGAR MENSAJES
-// ========================================
+// =========================
+// MENSAJES
+// =========================
 
 function agregarMensaje(texto, tipo="ia") {
 
     const chat = document.getElementById("chat");
 
     const div = document.createElement("div");
+
     div.className = `mensaje ${tipo}`;
 
-    // 🔥 render HTML matemático
-    div.innerHTML = texto
-        .replace(/\n/g, "<br>");
+    div.innerHTML = texto.replace(/\n/g, "<br>");
 
     chat.appendChild(div);
 
-    // 🔥 ACTUALIZAR MATHJAX
+    // MATHJAX
+
     if (window.MathJax) {
         MathJax.typesetPromise([div]);
     }
@@ -167,9 +227,9 @@ function agregarMensaje(texto, tipo="ia") {
     chat.scrollTop = chat.scrollHeight;
 }
 
-// ========================================
+// =========================
 // TYPING
-// ========================================
+// =========================
 
 function agregarTyping() {
 
@@ -196,12 +256,14 @@ function quitarTyping() {
 
     const typing = document.getElementById("typing");
 
-    if (typing) typing.remove();
+    if (typing) {
+        typing.remove();
+    }
 }
 
-// ========================================
-// SONIDO JARVIS
-// ========================================
+// =========================
+// SONIDO
+// =========================
 
 function sonar() {
 
@@ -214,9 +276,9 @@ function sonar() {
     audio.play();
 }
 
-// ========================================
+// =========================
 // PDF
-// ========================================
+// =========================
 
 async function subirPDF() {
 
@@ -248,15 +310,77 @@ async function subirPDF() {
 
     } catch {
 
-        agregarMensaje("❌ Error al subir PDF", "ia");
+        agregarMensaje(
+            "❌ Error al subir PDF",
+            "ia"
+        );
     }
 
     input.value = "";
 }
 
-// ========================================
+// =========================
+// OCR FOTO
+// =========================
+
+document.getElementById("imagenInput")
+.addEventListener("change", async function() {
+
+    const archivo = this.files[0];
+
+    if (!archivo) return;
+
+    agregarMensaje(
+        "📷 Analizando imagen matemática...",
+        "ia"
+    );
+
+    agregarTyping();
+
+    const formData = new FormData();
+
+    formData.append("imagen", archivo);
+
+    try {
+
+        const respuesta = await fetch(
+            "/resolver_imagen",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const datos = await respuesta.json();
+
+        quitarTyping();
+
+        agregarMensaje(
+            "📸 Texto detectado:<br><br>" +
+            datos.texto_detectado,
+            "ia"
+        );
+
+        agregarMensaje(
+            datos.respuesta,
+            "ia"
+        );
+
+    } catch {
+
+        quitarTyping();
+
+        agregarMensaje(
+            "❌ Error leyendo imagen",
+            "ia"
+        );
+    }
+
+});
+
+// =========================
 // ENVIAR
-// ========================================
+// =========================
 
 async function enviarPregunta() {
 
@@ -281,6 +405,7 @@ async function enviarPregunta() {
     try {
 
         const respuesta = await fetch("/preguntar", {
+
             method: "POST",
 
             headers: {
@@ -300,9 +425,7 @@ async function enviarPregunta() {
 
         sonar();
 
-        // =========================
         // VOZ
-        // =========================
 
         if (usarVoz) {
 
@@ -317,9 +440,7 @@ async function enviarPregunta() {
             speechSynthesis.speak(voz);
         }
 
-        // =========================
-        // GRAFICAS
-        // =========================
+        // GRAFICA
 
         if (datos.grafica) {
 
@@ -328,8 +449,6 @@ async function enviarPregunta() {
             document.getElementById(
                 "contadorGraficas"
             ).innerText = totalGraficas;
-
-            // CHAT
 
             const div = document.createElement("div");
 
@@ -343,36 +462,12 @@ async function enviarPregunta() {
             document.getElementById("chat")
                 .appendChild(div);
 
-            // PANEL
-
-            const card = document.createElement("div");
-
-            card.className = "card-grafica";
-
-            card.innerHTML = `
-                <img src="data:image/png;base64,${datos.grafica}">
-            `;
-
-            document.getElementById(
-                "graficasContainer"
-            ).appendChild(card);
-
-            // HISTORIAL
-
-            const mini = document.createElement("div");
-
-            mini.className = "mini-grafica";
-
-            mini.innerHTML = `
-                <img src="data:image/png;base64,${datos.grafica}">
-            `;
-
-            document.getElementById(
-                "historialGraficas"
-            ).appendChild(mini);
+            document.getElementById("chat")
+                .scrollTop =
+                document.getElementById("chat").scrollHeight;
         }
 
-    } catch (error) {
+    } catch {
 
         quitarTyping();
 
@@ -383,9 +478,9 @@ async function enviarPregunta() {
     }
 }
 
-// ========================================
+// =========================
 // ENTER
-// ========================================
+// =========================
 
 document.getElementById("pregunta")
 .addEventListener("keypress", function(e){
@@ -398,9 +493,9 @@ document.getElementById("pregunta")
     }
 });
 
-// ========================================
+// =========================
 // VOZ
-// ========================================
+// =========================
 
 function escucharVoz() {
 
@@ -414,20 +509,30 @@ function escucharVoz() {
 
     reconocimiento.onresult = async function(evento){
 
-        const texto = evento.results[0][0].transcript;
+        const texto =
+        evento.results[0][0].transcript;
 
-        document.getElementById("pregunta").value = texto;
+        document.getElementById("pregunta")
+        .value = texto;
 
         await enviarPregunta();
 
         usarVoz = false;
     };
 }
+
+// =========================
+// SIDEBAR MOBILE
+// =========================
+
 function toggleSidebar(){
 
-    const sidebar = document.getElementById("sidebar");
+    const sidebar =
+    document.getElementById("sidebar");
 
-    sidebar.classList.toggle("sidebar-activo");
+    sidebar.classList.toggle(
+        "sidebar-activo"
+    );
 }
 
 </script>
