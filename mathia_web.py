@@ -25,9 +25,10 @@ import cv2
 # TESSERACT WINDOWS
 # ========================================
 
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-)
+if os.name == "nt":
+    pytesseract.pytesseract.tesseract_cmd = (
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    )
 # ========================================
 # APP
 # ========================================
@@ -284,50 +285,21 @@ def leer_imagen_matematica(imagen):
 
     try:
 
-        # convertir bytes
-        file_bytes = np.asarray(
-            bytearray(imagen.read()),
-            dtype=np.uint8
-        )
+        img = Image.open(imagen).convert("L")
 
-        # leer imagen
-        img = cv2.imdecode(
-            file_bytes,
-            cv2.IMREAD_COLOR
-        )
+        img = np.array(img)
 
-        if img is None:
-            return ""
-
-        # escala grises
-        gray = cv2.cvtColor(
+        img = cv2.threshold(
             img,
-            cv2.COLOR_BGR2GRAY
-        )
-
-        # mejorar nitidez
-        gray = cv2.GaussianBlur(
-            gray,
-            (3,3),
-            0
-        )
-
-        # binarización
-        _, thresh = cv2.threshold(
-            gray,
             150,
             255,
             cv2.THRESH_BINARY
-        )
+        )[1]
 
-        # OCR
         texto = pytesseract.image_to_string(
-            thresh,
+            img,
             config='--psm 6'
         )
-
-        print("OCR DETECTADO:")
-        print(texto)
 
         return texto.strip()
 
