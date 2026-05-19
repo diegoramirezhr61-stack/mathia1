@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, session
 from groq import Groq
+import google.generativeai as genai
 
 import os
 import io
@@ -15,21 +16,10 @@ from sympy import *
 import io
 import base64
 import PyPDF2
-import pytesseract
 
 from PIL import Image
-import cv2
 
-
-# ========================================
-# TESSERACT WINDOWS
-# ========================================
-
-if os.name == "nt":
-    pytesseract.pytesseract.tesseract_cmd = (
-        r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-    )
-# ========================================
+#===============================
 # APP
 # ========================================
 
@@ -42,6 +32,17 @@ app.secret_key = "mathia_secret"
 # ========================================
 
 api_key = os.getenv("GROQ_API_KEY")
+# =========================
+# GEMINI
+# =========================
+
+genai.configure(
+    api_key=os.getenv("GEMINI_API_KEY")
+)
+
+modelo_gemini = genai.GenerativeModel(
+    "gemini-1.5-flash"
+)
 
 if not api_key:
     raise Exception("Falta GROQ_API_KEY")
@@ -276,64 +277,32 @@ def generar_grafica(funcion):
         print("ERROR GRAFICA:", e)
 
         return None
-
-def leer_imagen_matematica(imagen):
+def analizar_imagen_con_ia(imagen):
 
     try:
 
-        # =========================
-        # ABRIR IMAGEN
-        # =========================
+        img = Image.open(imagen)
 
-        img = Image.open(imagen).convert("L")
+        respuesta = modelo_gemini.generate_content([
+            """
+Lee el ejercicio matemático de la imagen.
 
-        # PIL -> NUMPY
-        img = np.array(img)
+Luego:
+1. identifica el problema
+2. resuélvelo paso a paso
+3. usa formato matemático LaTeX
+4. explica claramente
+""",
+            img
+        ])
 
-        # =========================
-        # MEJORAR OCR
-        # =========================
-
-        img = cv2.resize(
-            img,
-            None,
-            fx=2,
-            fy=2,
-            interpolation=cv2.INTER_CUBIC
-        )
-
-        img = cv2.GaussianBlur(
-            img,
-            (3,3),
-            0
-        )
-
-        img = cv2.threshold(
-            img,
-            0,
-            255,
-            cv2.THRESH_BINARY + cv2.THRESH_OTSU
-        )[1]
-
-        # =========================
-        # OCR
-        # =========================
-
-        texto = pytesseract.image_to_string(
-            img,
-            config='--psm 6'
-        )
-
-        print("TEXTO OCR:", texto)
-
-        return texto.strip()
+        return respuesta.text
 
     except Exception as e:
 
-        print("ERROR OCR:", e)
+        print("ERROR GEMINI:", e)
 
-        return ""
-
+        return "No pude analizar la imagen."
 # ========================================
 # HOME
 # ========================================
@@ -484,29 +453,12 @@ def resolver_imagen():
 
         imagen = request.files["imagen"]
 
-        texto = leer_imagen_matematica(imagen)
-
-        if not texto:
-
-            return jsonify({
-                "respuesta": "No pude leer la imagen"
-            })
-
-        prompt = f"""
-Resuelve paso a paso este ejercicio matemático:
-
-{texto}
-"""
-
-        respuesta = preguntar_ia(prompt)
+        respuesta = analizar_imagen_con_ia(imagen)
 
         return jsonify({
-
-            "texto_detectado": texto,
-
-            "respuesta": respuesta
-        })
-
+    "texto_detectado": "Imagen analizada con IA",
+    "respuesta": respuesta
+})
     except Exception as e:
 
         print("ERROR IMAGEN:", e)
