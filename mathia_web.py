@@ -12,12 +12,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sympy import *
-
+import io
+import base64
 import PyPDF2
 import pytesseract
 
 from PIL import Image
+import cv2
+import easyocr
 
+# ========================================
+# TESSERACT WINDOWS
+# ========================================
+
+pytesseract.pytesseract.tesseract_cmd = (
+    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+)
 # ========================================
 # APP
 # ========================================
@@ -267,26 +277,57 @@ def generar_grafica(funcion):
         return None
 
 # ========================================
-# OCR IMAGEN
+# OCR MATEMÁTICO MEJORADO
 # ========================================
 
 def leer_imagen_matematica(imagen):
 
     try:
 
-        # abrir imagen
-        img = Image.open(imagen)
+        # convertir bytes
+        file_bytes = np.asarray(
+            bytearray(imagen.read()),
+            dtype=np.uint8
+        )
 
-        # convertir a RGB
-        img = img.convert("RGB")
+        # leer imagen
+        img = cv2.imdecode(
+            file_bytes,
+            cv2.IMREAD_COLOR
+        )
+
+        if img is None:
+            return ""
+
+        # escala grises
+        gray = cv2.cvtColor(
+            img,
+            cv2.COLOR_BGR2GRAY
+        )
+
+        # mejorar nitidez
+        gray = cv2.GaussianBlur(
+            gray,
+            (3,3),
+            0
+        )
+
+        # binarización
+        _, thresh = cv2.threshold(
+            gray,
+            150,
+            255,
+            cv2.THRESH_BINARY
+        )
 
         # OCR
         texto = pytesseract.image_to_string(
-            img,
+            thresh,
             config='--psm 6'
         )
 
-        print("TEXTO OCR:", texto)
+        print("OCR DETECTADO:")
+        print(texto)
 
         return texto.strip()
 
