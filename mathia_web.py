@@ -436,10 +436,6 @@ def subir_pdf():
             "mensaje": "Error procesando PDF"
         })
 
-# ========================================
-# RESOLVER IMAGEN
-# ========================================
-
 @app.route("/resolver_imagen", methods=["POST"])
 def resolver_imagen():
 
@@ -456,9 +452,10 @@ def resolver_imagen():
         respuesta = analizar_imagen_con_ia(imagen)
 
         return jsonify({
-    "texto_detectado": "Imagen analizada con IA",
-    "respuesta": respuesta
-})
+            "texto_detectado": "Imagen analizada con Gemini",
+            "respuesta": respuesta
+        })
+
     except Exception as e:
 
         print("ERROR IMAGEN:", e)
