@@ -6,7 +6,5 @@ matplotlib
 numpy
 requests 
 PyPDF2
-pytesseract
-pillow
-opencv-python-headless
-
+google-generativeai
+Pillow
