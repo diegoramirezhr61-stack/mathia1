@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 
 <meta charset="UTF-8">
@@ -14,6 +15,7 @@ href="{{ url_for('static', filename='style.css') }}">
 rel="stylesheet">
 
 <!-- MATHJAX -->
+
 <script>
 window.MathJax = {
     tex: {
@@ -36,15 +38,14 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
 <body>
 
 <!-- MENU MOBILE -->
+
 <button class="menu-btn" onclick="toggleSidebar()">
 ☰
 </button>
 
 <div class="app">
 
-<!-- =========================
-SIDEBAR
-========================= -->
+<!-- SIDEBAR -->
 
 <aside class="sidebar" id="sidebar">
 
@@ -114,22 +115,24 @@ SIDEBAR
 
 </aside>
 
-<!-- =========================
-CHAT
-========================= -->
+<!-- CHAT -->
 
 <main class="chat-container">
-
-    <!-- CHAT -->
 
     <div id="chat" class="chat">
 
         <div class="mensaje ia">
-            👋 Hola, soy MathIA.
-            Puedo ayudarte con cálculo,
-            álgebra, matrices, PDFs,
-            gráficas matemáticas y fotos
-            de ejercicios.
+            👋 Hola, soy MathIA.<br><br>
+
+            Puedo ayudarte con:
+            <br><br>
+
+            • cálculo<br>
+            • álgebra<br>
+            • matrices<br>
+            • derivadas<br>
+            • integrales<br>
+            • gráficas matemáticas
         </div>
 
     </div>
@@ -138,54 +141,7 @@ CHAT
 
     <div class="input-area">
 
-        <!-- FOTO -->
-
-        <input
-        type="file"
-        id="imagenInput"
-        accept="image/*"
-        hidden>
-
-        <script>
-
-document.getElementById("imagenInput")
-.addEventListener("change", subirImagen);
-
-</script>
-
-        <input
-type="file"
-id="imagenInput"
-accept="image/*"
-hidden
-onchange="analizarImagen()"
->
-
-<button
-class="icon-btn"
-onclick="document.getElementById('imagenInput').click()">
-📷
-</button>
-
-        <!-- PDF -->
-
-        <input
-        type="file"
-        id="pdfInput"
-        accept=".pdf"
-        hidden>
-
-        <button class="icon-btn"
-        onclick="document.getElementById('pdfInput').click()">
-        📄
-        </button>
-
-        <button class="icon-btn"
-        onclick="subirPDF()">
-        ⬆
-        </button>
-
-        <!-- INPUT -->
+        <!-- INPUT TEXTO -->
 
         <textarea
         id="pregunta"
@@ -194,14 +150,16 @@ onclick="document.getElementById('imagenInput').click()">
 
         <!-- MICRO -->
 
-        <button class="icon-btn"
+        <button
+        class="icon-btn"
         onclick="escucharVoz()">
         🎤
         </button>
 
         <!-- ENVIAR -->
 
-        <button class="enviar-btn"
+        <button
+        class="enviar-btn"
         onclick="enviarPregunta()">
         Enviar
         </button>
@@ -293,220 +251,7 @@ function sonar() {
 }
 
 // =========================
-// PDF
-// =========================
-
-async function subirPDF() {
-
-    const input = document.getElementById("pdfInput");
-
-    const archivo = input.files[0];
-
-    if (!archivo) {
-        alert("Selecciona un PDF");
-        return;
-    }
-
-    agregarMensaje("📄 Procesando PDF...", "ia");
-
-    const formData = new FormData();
-
-    formData.append("pdf", archivo);
-
-    try {
-
-        const respuesta = await fetch("/subir_pdf", {
-            method: "POST",
-            body: formData
-        });
-
-        const datos = await respuesta.json();
-
-        agregarMensaje(datos.mensaje, "ia");
-
-    } catch {
-
-        agregarMensaje(
-            "❌ Error al subir PDF",
-            "ia"
-        );
-    }
-
-    input.value = "";
-}
-
-// ========================================
-// SUBIR IMAGEN
-// ========================================
-
-async function subirImagen() {
-
-    const input = document.getElementById("imagenInput");
-
-    const imagen = input.files[0];
-
-    if (!imagen) return;
-
-    agregarMensaje(
-        "📷 Analizando imagen matemática...",
-        "ia"
-    );
-
-    const formData = new FormData();
-
-    formData.append("imagen", imagen);
-
-    try {
-
-        const respuesta = await fetch(
-            "/resolver_imagen",
-            {
-                method: "POST",
-                body: formData
-            }
-        );
-
-        const datos = await respuesta.json();
-
-        if(datos.texto_detectado){
-
-            agregarMensaje(
-                "📸 Texto detectado:<br><br>" +
-                datos.texto_detectado,
-                "ia"
-            );
-        }
-
-        agregarMensaje(
-            datos.respuesta,
-            "ia"
-        );
-
-    } catch(error){
-
-        agregarMensaje(
-            "❌ Error procesando imagen",
-            "ia"
-        );
-    }
-
-    input.value = "";
-}
-// =========================
-// OCR FOTO
-// =========================
-
-document.getElementById("imagenInput")
-.addEventListener("change", async function() {
-
-    const archivo = this.files[0];
-
-    if (!archivo) return;
-
-    agregarMensaje(
-        "📷 Analizando imagen matemática...",
-        "ia"
-    );
-
-    agregarTyping();
-
-    const formData = new FormData();
-
-    formData.append("imagen", archivo);
-
-    try {
-
-        const respuesta = await fetch(
-            "/resolver_imagen",
-            {
-                method: "POST",
-                body: formData
-            }
-        );
-
-        const datos = await respuesta.json();
-
-        quitarTyping();
-
-        agregarMensaje(
-            "📸 Texto detectado:<br><br>" +
-            datos.texto_detectado,
-            "ia"
-        );
-
-        agregarMensaje(
-            datos.respuesta,
-            "ia"
-        );
-
-    } catch {
-
-        quitarTyping();
-
-        agregarMensaje(
-            "❌ Error leyendo imagen",
-            "ia"
-        );
-    }
-
-});
-
-async function analizarImagen() {
-
-    const input = document.getElementById("imagenInput");
-
-    const archivo = input.files[0];
-
-    if (!archivo) {
-        alert("Selecciona una imagen");
-        return;
-    }
-
-    agregarMensaje(
-        "📷 Analizando imagen matemática...",
-        "ia"
-    );
-
-    const formData = new FormData();
-
-    formData.append("imagen", archivo);
-
-    try {
-
-        const respuesta = await fetch(
-            "/resolver_imagen",
-            {
-                method: "POST",
-                body: formData
-            }
-        );
-
-        const datos = await respuesta.json();
-
-        agregarMensaje(
-            "📸 Texto detectado:\n\n" +
-            datos.texto_detectado,
-            "ia"
-        );
-
-        agregarMensaje(
-            datos.respuesta,
-            "ia"
-        );
-
-    } catch(error){
-
-        agregarMensaje(
-            "❌ Error leyendo imagen",
-            "ia"
-        );
-    }
-
-    input.value = "";
-}
-
-// =========================
-// ENVIAR
+// ENVIAR PREGUNTA
 // =========================
 
 async function enviarPregunta() {
@@ -604,7 +349,6 @@ async function enviarPregunta() {
         );
     }
 }
-
 
 // =========================
 // ENTER
