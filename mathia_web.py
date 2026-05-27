@@ -12,7 +12,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sympy import *
-
+from sympy import (
+    symbols,
+    sympify,
+    diff,
+    integrate,
+    limit,
+    oo,
+    latex
+)
 # ================================
 # APP
 # ================================
@@ -260,7 +268,126 @@ def generar_grafica(funcion):
         return None
 
 # ================================
-# ROUTER MATEMÁTICO
+# VARIABLE GLOBAL
+# ================================
+
+x = symbols("x")
+
+# ================================
+# DERIVADAS REALES
+# ================================
+
+def resolver_derivada(expresion):
+
+    try:
+
+        expresion = expresion.replace("^", "**")
+
+        expr = sympify(expresion)
+
+        resultado = diff(expr, x)
+
+        return f"""
+Paso 1:
+
+\\[
+f(x) = {latex(expr)}
+\\]
+
+Paso 2: derivamos
+
+\\[
+f'(x) = {latex(resultado)}
+\\]
+
+Resultado final:
+
+\\[
+{latex(resultado)}
+\\]
+"""
+
+    except Exception as e:
+
+        print("ERROR DERIVADA:", e)
+
+        return "No pude resolver la derivada."
+
+# ================================
+# INTEGRALES REALES
+# ================================
+
+def resolver_integral(expresion):
+
+    try:
+
+        expresion = expresion.replace("^", "**")
+
+        expr = sympify(expresion)
+
+        resultado = integrate(expr, x)
+
+        return f"""
+Integral:
+
+\\[
+\\int {latex(expr)} dx
+\\]
+
+Resultado:
+
+\\[
+{latex(resultado)} + C
+\\]
+"""
+
+    except Exception as e:
+
+        print("ERROR INTEGRAL:", e)
+
+        return "No pude resolver la integral."
+
+# ================================
+# LIMITES REALES
+# ================================
+
+def resolver_limite(expresion, valor):
+
+    try:
+
+        expresion = expresion.replace("^", "**")
+
+        expr = sympify(expresion)
+
+        if valor == "infinito":
+            valor = oo
+        else:
+            valor = float(valor)
+
+        resultado = limit(expr, x, valor)
+
+        return f"""
+Límite:
+
+\\[
+\\lim_{{x \\to {latex(valor)}}} {latex(expr)}
+\\]
+
+Resultado:
+
+\\[
+{latex(resultado)}
+\\]
+"""
+
+    except Exception as e:
+
+        print("ERROR LIMITE:", e)
+
+        return "No pude resolver el límite."
+    
+# ================================
+# ROUTER INTELIGENTE
 # ================================
 
 def router(pregunta):
@@ -272,19 +399,16 @@ def router(pregunta):
     # =========================
 
     if any(x in texto for x in [
-    "grafica",
-    "gráfica",
-    "plot",
-    "dibujar",
-    "graficar"
-]):
+
+        "grafica",
+        "gráfica",
+        "graficar",
+        "plot",
+        "dibujar"
+
+    ]):
 
         funcion = texto
-
-        funcion = funcion.replace("grafica", "")
-        funcion = funcion.replace("gráfica", "")
-        funcion = funcion.replace("plot", "")
-        funcion = funcion.replace("dibujar", "")
 
         grafica = generar_grafica(funcion)
 
@@ -294,47 +418,19 @@ def router(pregunta):
         }
 
     # =========================
-    # LIMITES
-    # =========================
-
-    if "limite" in texto or "límite" in texto:
-
-        prompt = f"""
-Resuelve este límite paso a paso:
-
-{pregunta}
-
-Usa LaTeX y explica cada paso.
-"""
-
-        return {
-            "respuesta": preguntar_ia(prompt),
-            "grafica": None
-        }
-
-    # =========================
     # DERIVADAS
     # =========================
 
-    if any(x in texto for x in [
+    if "deriva" in texto or "derivada" in texto:
 
-        "deriva",
-        "derivada",
-        "f'",
-        "dy/dx"
+        expr = texto
 
-    ]):
-
-        prompt = f"""
-Resuelve esta derivada paso a paso:
-
-{pregunta}
-
-Usa reglas de derivación y LaTeX.
-"""
+        expr = expr.replace("deriva", "")
+        expr = expr.replace("derivada de", "")
+        expr = expr.strip()
 
         return {
-            "respuesta": preguntar_ia(prompt),
+            "respuesta": resolver_derivada(expr),
             "grafica": None
         }
 
@@ -342,48 +438,48 @@ Usa reglas de derivación y LaTeX.
     # INTEGRALES
     # =========================
 
-    if any(x in texto for x in [
+    if "integral" in texto:
 
-        "integral",
-        "∫"
+        expr = texto
 
-    ]):
-
-        prompt = f"""
-Resuelve esta integral paso a paso:
-
-{pregunta}
-
-Si es sustitución explícalo.
-Usa LaTeX.
-"""
+        expr = expr.replace("integral de", "")
+        expr = expr.replace("integral", "")
+        expr = expr.strip()
 
         return {
-            "respuesta": preguntar_ia(prompt),
+            "respuesta": resolver_integral(expr),
             "grafica": None
         }
 
     # =========================
-    # CONTINUIDAD
+    # LIMITES
     # =========================
 
-    if "continuidad" in texto or "continua" in texto:
+    if "limite" in texto or "límite" in texto:
 
-        prompt = f"""
-Analiza la continuidad de la función:
+        try:
 
-{pregunta}
+            partes = texto.split("de")
 
-Explica dominio, límites laterales y conclusión.
-"""
+            expr = partes[1].strip()
 
-        return {
-            "respuesta": preguntar_ia(prompt),
-            "grafica": None
-        }
+            return {
+                "respuesta": resolver_limite(
+                    expr,
+                    "infinito"
+                ),
+                "grafica": None
+            }
+
+        except:
+
+            return {
+                "respuesta": "Formato de límite inválido.",
+                "grafica": None
+            }
 
     # =========================
-    # NORMAL
+    # IA NORMAL
     # =========================
 
     return {
