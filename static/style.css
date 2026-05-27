@@ -9,9 +9,13 @@ BODY
 ========================= */
 
 body{
-    background:#0f172a;
+
+    background:#0b1120;
+
     color:white;
+
     font-family:'Poppins',sans-serif;
+
     overflow:hidden;
 }
 
@@ -20,9 +24,13 @@ APP
 ========================= */
 
 .app{
+
     display:flex;
+
     width:100%;
+
     height:100vh;
+
     overflow:hidden;
 }
 
@@ -32,29 +40,37 @@ SIDEBAR
 
 .sidebar{
 
-    width:260px;
-    min-width:260px;
+    width:270px;
+    min-width:270px;
 
     background:#111827;
+
+    border-right:1px solid #1e293b;
 
     padding:20px;
 
     overflow-y:auto;
-
-    border-right:1px solid #1e293b;
 }
 
+/* =========================
+LOGO
+========================= */
+
 .logo{
+
     display:flex;
+
     align-items:center;
+
     gap:15px;
-    margin-bottom:30px;
+
+    margin-bottom:35px;
 }
 
 .logo-icon{
 
-    width:55px;
-    height:55px;
+    width:60px;
+    height:60px;
 
     border-radius:50%;
 
@@ -65,20 +81,29 @@ SIDEBAR
     );
 
     display:flex;
+
     align-items:center;
     justify-content:center;
 
-    font-size:24px;
+    font-size:28px;
+
     font-weight:bold;
+
+    box-shadow:0 0 20px rgba(56,189,248,.5);
 }
 
 .logo h2{
+
     font-family:'Orbitron',sans-serif;
+
+    font-size:24px;
 }
 
 .logo p{
-    font-size:12px;
+
     color:#94a3b8;
+
+    font-size:12px;
 }
 
 /* =========================
@@ -86,13 +111,16 @@ ESTADO
 ========================= */
 
 .estado{
+
     display:flex;
+
     align-items:center;
+
     gap:10px;
 
-    margin-bottom:30px;
-
     color:#22c55e;
+
+    margin-bottom:35px;
 }
 
 .punto{
@@ -117,11 +145,11 @@ SECCIONES
 
 .seccion h3{
 
-    margin-bottom:15px;
-
     color:#94a3b8;
 
-    font-size:14px;
+    font-size:13px;
+
+    margin-bottom:15px;
 }
 
 /* =========================
@@ -132,30 +160,32 @@ TEMAS
 
     background:#1e293b;
 
-    padding:12px;
+    padding:14px;
 
-    border-radius:10px;
+    border-radius:12px;
 
-    margin-bottom:10px;
+    margin-bottom:12px;
+
+    transition:.3s;
 
     cursor:pointer;
-
-    transition:0.3s;
 }
 
 .tema:hover{
 
     background:#334155;
 
-    transform:translateX(5px);
+    transform:translateX(6px);
 }
 
 /* =========================
-CARDS
+STATS
 ========================= */
 
 .stats{
+
     display:flex;
+
     gap:10px;
 }
 
@@ -165,15 +195,27 @@ CARDS
 
     background:#1e293b;
 
+    border:1px solid #334155;
+
     padding:15px;
 
-    border-radius:12px;
+    border-radius:15px;
 
     text-align:center;
 }
 
 .card h2{
+
     color:#38bdf8;
+
+    margin-bottom:5px;
+}
+
+.card p{
+
+    font-size:13px;
+
+    color:#94a3b8;
 }
 
 /* =========================
@@ -185,9 +227,8 @@ CHAT CONTAINER
     flex:1;
 
     display:flex;
-    flex-direction:column;
 
-    width:calc(100% - 260px);
+    flex-direction:column;
 
     height:100vh;
 
@@ -203,11 +244,11 @@ CHAT
     flex:1;
 
     overflow-y:auto;
-    overflow-x:hidden;
 
-    padding:25px;
+    padding:30px;
 
     display:flex;
+
     flex-direction:column;
 
     gap:18px;
@@ -221,37 +262,45 @@ MENSAJES
 
 .mensaje{
 
-    width:fit-content;
-
     max-width:85%;
 
-    padding:14px 18px;
+    padding:16px 20px;
 
-    border-radius:16px;
+    border-radius:18px;
 
-    margin-bottom:15px;
+    line-height:1.8;
+
+    word-wrap:break-word;
 
     animation:fadeIn .3s ease;
-
-    line-height:1.7;
-
-    word-break:break-word;
 }
 
-.mensaje img{
-    max-width:100%;
-}
+/* =========================
+USUARIO
+========================= */
 
 .usuario{
 
-    background:#2563eb;
-
     margin-left:auto;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #06b6d4
+    );
+
+    box-shadow:0 0 15px rgba(59,130,246,.3);
 }
+
+/* =========================
+IA
+========================= */
 
 .ia{
 
     background:#1e293b;
+
+    border:1px solid #334155;
 }
 
 /* =========================
@@ -262,17 +311,15 @@ INPUT AREA
 
     display:flex;
 
-    align-items:center;
+    align-items:flex-end;
 
-    gap:10px;
+    gap:12px;
 
-    padding:15px;
+    padding:15px 20px;
 
     background:#111827;
 
     border-top:1px solid #1e293b;
-
-    flex-wrap:nowrap;
 }
 
 /* =========================
@@ -285,17 +332,17 @@ textarea{
 
     resize:none;
 
-    min-height:55px;
-    max-height:140px;
+    min-height:60px;
+    max-height:180px;
 
     overflow-y:auto;
 
     border:none;
     outline:none;
 
-    border-radius:14px;
+    border-radius:18px;
 
-    padding:15px;
+    padding:18px;
 
     background:#1e293b;
 
@@ -304,6 +351,17 @@ textarea{
     font-size:15px;
 
     font-family:'Poppins',sans-serif;
+
+    border:1px solid transparent;
+
+    transition:.3s;
+}
+
+textarea:focus{
+
+    border:1px solid #38bdf8;
+
+    box-shadow:0 0 15px rgba(56,189,248,.2);
 }
 
 /* =========================
@@ -317,15 +375,17 @@ BOTONES
 
     cursor:pointer;
 
-    transition:0.3s;
+    transition:.3s;
 }
+
+/* ICONOS */
 
 .icon-btn{
 
     width:55px;
     height:55px;
 
-    border-radius:14px;
+    border-radius:16px;
 
     background:#1e293b;
 
@@ -337,16 +397,21 @@ BOTONES
 }
 
 .icon-btn:hover{
+
     background:#334155;
+
+    transform:translateY(-2px);
 }
+
+/* ENVIAR */
 
 .enviar-btn{
 
-    padding:0 25px;
-
     height:55px;
 
-    border-radius:14px;
+    padding:0 24px;
+
+    border-radius:16px;
 
     background:linear-gradient(
         135deg,
@@ -356,12 +421,15 @@ BOTONES
 
     color:white;
 
-    font-weight:bold;
+    font-weight:600;
 
-    flex-shrink:0;
+    font-size:15px;
+
+    box-shadow:0 0 20px rgba(59,130,246,.35);
 }
 
 .enviar-btn:hover{
+
     transform:scale(1.05);
 }
 
@@ -375,11 +443,11 @@ GRAFICAS
 
     max-width:700px;
 
-    border-radius:14px;
-
-    margin-top:10px;
+    border-radius:16px;
 
     background:white;
+
+    margin-top:10px;
 }
 
 /* =========================
@@ -387,8 +455,11 @@ TYPING
 ========================= */
 
 .typing{
+
     display:flex;
+
     gap:6px;
+
     width:80px;
 }
 
@@ -455,8 +526,12 @@ SCROLL
     border-radius:10px;
 }
 
+::-webkit-scrollbar-track{
+    background:transparent;
+}
+
 /* =========================
-BOTON MENU MOBILE
+MENU MOBILE
 ========================= */
 
 .menu-btn{
@@ -464,33 +539,10 @@ BOTON MENU MOBILE
 }
 
 /* =========================
-TABLETS
-========================= */
-
-@media screen and (max-width:900px){
-
-    .mensaje{
-        max-width:95%;
-    }
-
-    textarea{
-        font-size:16px;
-    }
-}
-
-/* =========================
-MOBILE
+RESPONSIVE
 ========================= */
 
 @media screen and (max-width:768px){
-
-    .app{
-        display:flex;
-        height:100vh;
-        overflow:hidden;
-    }
-
-    /* MENU */
 
     .menu-btn{
 
@@ -508,7 +560,7 @@ MOBILE
 
         border:none;
 
-        border-radius:12px;
+        border-radius:14px;
 
         background:#111827;
 
@@ -516,12 +568,10 @@ MOBILE
 
         font-size:28px;
 
-        cursor:pointer;
-
         align-items:center;
         justify-content:center;
 
-        box-shadow:0 0 15px rgba(0,255,255,0.3);
+        cursor:pointer;
     }
 
     /* SIDEBAR */
@@ -534,13 +584,12 @@ MOBILE
         left:-100%;
 
         width:80%;
+
         height:100vh;
 
         z-index:999;
 
-        transition:0.4s ease;
-
-        overflow-y:auto;
+        transition:.4s ease;
     }
 
     .sidebar-activo{
@@ -549,21 +598,14 @@ MOBILE
 
     /* CHAT */
 
-    .chat-container{
-
-        width:100%;
-
-        height:100vh;
-    }
-
     .chat{
 
         padding-top:80px;
 
-        padding-bottom:100px;
-
         padding-left:15px;
         padding-right:15px;
+
+        padding-bottom:120px;
     }
 
     /* INPUT */
@@ -577,41 +619,33 @@ MOBILE
 
         width:100%;
 
-        background:#0f172a;
-
         padding:10px;
 
-        z-index:999;
-
-        border-top:1px solid #1e293b;
+        background:#0b1120;
     }
 
     textarea{
+
         font-size:16px;
     }
 
     .mensaje{
+
         max-width:100%;
     }
 
-        .icon-btn{
+    .icon-btn{
 
-        width:45px;
-        height:45px;
+        width:48px;
+        height:48px;
 
         font-size:18px;
     }
 
     .enviar-btn{
 
-        height:45px;
+        height:48px;
 
-        padding:0 15px;
-
-        font-size:14px;
-    }
-
-    .grafica{
-        width:100%;
+        padding:0 18px;
     }
 }
