@@ -174,51 +174,84 @@ def normalizar_funcion(texto):
     return texto
 
 # ================================
-# GRAFICAS
+# GRAFICAS CORREGIDAS
 # ================================
 
 def generar_grafica(funcion):
 
     try:
 
-        if not funcion:
-            funcion = "x**2"
+        print("FUNCION ORIGINAL:", funcion)
 
+        # limpiar texto
+        funcion = funcion.lower()
+
+        funcion = funcion.replace("grafica", "")
+        funcion = funcion.replace("gráfica", "")
+        funcion = funcion.replace("plot", "")
+        funcion = funcion.replace("dibujar", "")
+
+        funcion = funcion.strip()
+
+        # potencia
         funcion = funcion.replace("^", "**")
 
+        print("FUNCION LIMPIA:", funcion)
+
+        # variable
         x = symbols("x")
 
+        # convertir expresion
         expr = sympify(funcion)
 
+        # convertir a numpy
         f = lambdify(x, expr, "numpy")
 
-        xs = np.linspace(-10, 10, 400)
+        # valores x
+        xs = np.linspace(-10, 10, 500)
 
+        # valores y
         ys = f(xs)
 
-        if np.any(np.isnan(ys)) or np.any(np.isinf(ys)):
-            return None
+        # evitar errores infinitos
+        ys = np.nan_to_num(
+            ys,
+            nan=0.0,
+            posinf=0.0,
+            neginf=0.0
+        )
 
+        # figura
         plt.figure(figsize=(7,5))
 
         plt.plot(xs, ys)
 
-        plt.axhline(0)
-        plt.axvline(0)
+        plt.axhline(0, linewidth=1)
 
-        plt.grid()
+        plt.axvline(0, linewidth=1)
 
+        plt.grid(True)
+
+        plt.title(f"f(x) = {funcion}")
+
+        # guardar
         img = io.BytesIO()
 
-        plt.savefig(img, format="png")
+        plt.savefig(
+            img,
+            format="png",
+            bbox_inches="tight"
+        )
 
         plt.close()
 
         img.seek(0)
 
-        return base64.b64encode(
+        grafica_base64 = base64.b64encode(
             img.getvalue()
-        ).decode()
+        ).decode("utf-8")
+
+        return grafica_base64
 
     except Exception as e:
 
@@ -239,13 +272,12 @@ def router(pregunta):
     # =========================
 
     if any(x in texto for x in [
-
-        "grafica",
-        "gráfica",
-        "plot",
-        "dibujar"
-
-    ]):
+    "grafica",
+    "gráfica",
+    "plot",
+    "dibujar",
+    "graficar"
+]):
 
         funcion = texto
 
