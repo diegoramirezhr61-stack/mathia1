@@ -4,7 +4,4 @@ gunicorn
 sympy
 matplotlib
 numpy
-requests 
-PyPDF2
-google-generativeai
-Pillow
+requests
