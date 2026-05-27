@@ -273,34 +273,28 @@ def generar_grafica(funcion):
 
 x = symbols("x")
 
-# ================================
-# DERIVADAS REALES
-# ================================
-
 def resolver_derivada(expresion):
 
     try:
 
+        expresion = expresion.strip()
+
         expresion = expresion.replace("^", "**")
+
+        print("EXPRESION:", expresion)
 
         expr = sympify(expresion)
 
         resultado = diff(expr, x)
 
         return f"""
-Paso 1:
+Derivada:
 
 \\[
 f(x) = {latex(expr)}
 \\]
 
-Paso 2: derivamos
-
-\\[
-f'(x) = {latex(resultado)}
-\\]
-
-Resultado final:
+Resultado:
 
 \\[
 {latex(resultado)}
@@ -311,7 +305,7 @@ Resultado final:
 
         print("ERROR DERIVADA:", e)
 
-        return "No pude resolver la derivada."
+        return f"Error en derivada: {e}"
 
 # ================================
 # INTEGRALES REALES
@@ -427,7 +421,10 @@ def router(pregunta):
 
         expr = expr.replace("deriva", "")
         expr = expr.replace("derivada de", "")
+        expr = expr.replace("derivada", "")
         expr = expr.strip()
+
+        print("DERIVADA:", expr)
 
         return {
             "respuesta": resolver_derivada(expr),
