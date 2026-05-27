@@ -47,7 +47,7 @@ def init_session():
         session["historial_graficas"] = []
 
 # ================================
-# IA
+# IA GROQ MEJORADA
 # ================================
 
 def preguntar_ia(prompt):
@@ -55,16 +55,55 @@ def preguntar_ia(prompt):
     init_session()
 
     mensajes = [
+
         {
             "role": "system",
+
             "content": """
-Eres MathIA.
+Eres MathIA, una inteligencia artificial matemática avanzada.
 
-Explicas matemáticas paso a paso.
+Tu trabajo es resolver ejercicios matemáticos
+paso a paso de manera clara y profesional.
 
-Usa LaTeX para las fórmulas matemáticas.
+SIEMPRE:
+
+- Explica detalladamente.
+- Usa pasos numerados.
+- Usa LaTeX.
+- Resuelve como profesor universitario.
+- Si es cálculo, explica derivadas e integrales.
+- Si es límite, aplica propiedades.
+- Si es continuidad, analiza dominio.
+- Si es límite al infinito, analiza comportamiento.
+- Si es integración por sustitución, explica el cambio de variable.
+- Si es integral definida, resuelve evaluando límites.
+- Nunca respondas corto.
+- Nunca digas solo el resultado.
+
+FORMATO:
+
+1. Interpretación del ejercicio
+2. Desarrollo paso a paso
+3. Resultado final
+
+Ejemplos:
+
+\\[
+\\int_1^3 x^2 dx
+\\]
+
+\\[
+\\lim_{x \\to \\infty} \\frac{1}{x}
+\\]
+
+\\[
+f'(x)=2x
+\\]
+
+Habla SIEMPRE en español.
 """
         }
+
     ]
 
     mensajes.extend(session["memoria_chat"])
@@ -80,9 +119,9 @@ Usa LaTeX para las fórmulas matemáticas.
 
         messages=mensajes,
 
-        temperature=0.3,
+        temperature=0.2,
 
-        max_tokens=800
+        max_tokens=1500
     )
 
     texto = respuesta.choices[0].message.content
@@ -97,10 +136,9 @@ Usa LaTeX para las fórmulas matemáticas.
         "content": texto
     })
 
-    session["memoria_chat"] = session["memoria_chat"][-10:]
+    session["memoria_chat"] = session["memoria_chat"][-12:]
 
     return texto
-
 # ================================
 # NORMALIZAR FUNCION
 # ================================
@@ -189,44 +227,137 @@ def generar_grafica(funcion):
         return None
 
 # ================================
-# ROUTER
+# ROUTER MATEMÁTICO
 # ================================
 
 def router(pregunta):
 
     texto = pregunta.lower()
 
-    # 📊 GRAFICAS
+    # =========================
+    # GRAFICAS
+    # =========================
 
     if any(x in texto for x in [
+
         "grafica",
         "gráfica",
         "plot",
         "dibujar"
+
     ]):
 
-        funcion = normalizar_funcion(pregunta)
+        funcion = texto
+
+        funcion = funcion.replace("grafica", "")
+        funcion = funcion.replace("gráfica", "")
+        funcion = funcion.replace("plot", "")
+        funcion = funcion.replace("dibujar", "")
 
         grafica = generar_grafica(funcion)
-
-        session["historial_graficas"].append(grafica)
-
-        session["historial_graficas"] = (
-            session["historial_graficas"][-10:]
-        )
 
         return {
             "respuesta": "Gráfica generada correctamente.",
             "grafica": grafica
         }
 
-    # 💬 IA NORMAL
+    # =========================
+    # LIMITES
+    # =========================
+
+    if "limite" in texto or "límite" in texto:
+
+        prompt = f"""
+Resuelve este límite paso a paso:
+
+{pregunta}
+
+Usa LaTeX y explica cada paso.
+"""
+
+        return {
+            "respuesta": preguntar_ia(prompt),
+            "grafica": None
+        }
+
+    # =========================
+    # DERIVADAS
+    # =========================
+
+    if any(x in texto for x in [
+
+        "deriva",
+        "derivada",
+        "f'",
+        "dy/dx"
+
+    ]):
+
+        prompt = f"""
+Resuelve esta derivada paso a paso:
+
+{pregunta}
+
+Usa reglas de derivación y LaTeX.
+"""
+
+        return {
+            "respuesta": preguntar_ia(prompt),
+            "grafica": None
+        }
+
+    # =========================
+    # INTEGRALES
+    # =========================
+
+    if any(x in texto for x in [
+
+        "integral",
+        "∫"
+
+    ]):
+
+        prompt = f"""
+Resuelve esta integral paso a paso:
+
+{pregunta}
+
+Si es sustitución explícalo.
+Usa LaTeX.
+"""
+
+        return {
+            "respuesta": preguntar_ia(prompt),
+            "grafica": None
+        }
+
+    # =========================
+    # CONTINUIDAD
+    # =========================
+
+    if "continuidad" in texto or "continua" in texto:
+
+        prompt = f"""
+Analiza la continuidad de la función:
+
+{pregunta}
+
+Explica dominio, límites laterales y conclusión.
+"""
+
+        return {
+            "respuesta": preguntar_ia(prompt),
+            "grafica": None
+        }
+
+    # =========================
+    # NORMAL
+    # =========================
 
     return {
         "respuesta": preguntar_ia(pregunta),
         "grafica": None
     }
-
 # ================================
 # HOME
 # ================================
