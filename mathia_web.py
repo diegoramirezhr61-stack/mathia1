@@ -285,19 +285,24 @@ def resolver_derivada(expresion):
 
         resultado = diff(expr, x)
 
-        return f"""
-Derivada:
+        prompt = f"""
+Resuelve paso a paso esta derivada.
 
-\\[
-f(x) = {latex(expr)}
-\\]
+Función:
 
-Resultado:
+{expresion}
 
-\\[
-{latex(resultado)}
-\\]
+La derivada correcta es:
+
+{resultado}
+
+Explica detalladamente el procedimiento
+usando LaTeX y pasos numerados.
 """
+
+        explicacion = preguntar_ia(prompt)
+
+        return explicacion
 
     except Exception as e:
 
@@ -313,31 +318,37 @@ def resolver_integral(expresion):
 
     try:
 
+        expresion = expresion.strip()
+
         expresion = expresion.replace("^", "**")
 
         expr = sympify(expresion)
 
         resultado = integrate(expr, x)
 
-        return f"""
+        prompt = f"""
+Resuelve paso a paso esta integral.
+
 Integral:
 
-\\[
-\\int {latex(expr)} dx
-\\]
+{expresion}
 
-Resultado:
+El resultado correcto es:
 
-\\[
-{latex(resultado)} + C
-\\]
+{resultado}
+
+Explica detalladamente usando LaTeX.
 """
+
+        explicacion = preguntar_ia(prompt)
+
+        return explicacion
 
     except Exception as e:
 
         print("ERROR INTEGRAL:", e)
 
-        return "No pude resolver la integral."
+        return f"Error en integral: {e}"
 
 # ================================
 # LIMITES REALES
@@ -347,36 +358,43 @@ def resolver_limite(expresion, valor):
 
     try:
 
+        expresion = expresion.strip()
+
         expresion = expresion.replace("^", "**")
 
         expr = sympify(expresion)
 
         if valor == "infinito":
-            valor = oo
+            valor_sympy = oo
         else:
-            valor = float(valor)
+            valor_sympy = float(valor)
 
-        resultado = limit(expr, x, valor)
+        resultado = limit(expr, x, valor_sympy)
 
-        return f"""
+        prompt = f"""
+Resuelve paso a paso este límite.
+
 Límite:
 
-\\[
-\\lim_{{x \\to {latex(valor)}}} {latex(expr)}
-\\]
+{expresion}
 
-Resultado:
+El resultado correcto es:
 
-\\[
-{latex(resultado)}
-\\]
+{resultado}
+
+Explica usando propiedades de límites
+y LaTeX.
 """
+
+        explicacion = preguntar_ia(prompt)
+
+        return explicacion
 
     except Exception as e:
 
         print("ERROR LIMITE:", e)
 
-        return "No pude resolver el límite."
+        return f"Error en límite: {e}"
     
 # ================================
 # ROUTER INTELIGENTE
