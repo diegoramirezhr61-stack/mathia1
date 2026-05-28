@@ -281,8 +281,6 @@ def resolver_derivada(expresion):
 
         expresion = expresion.replace("^", "**")
 
-        print("EXPRESION:", expresion)
-
         expr = sympify(expresion)
 
         resultado = diff(expr, x)
@@ -415,14 +413,26 @@ def router(pregunta):
     # DERIVADAS
     # =========================
 
-    if "deriva" in texto or "derivada" in texto:
+    if texto.startswith("derivada de"):
 
-        expr = texto
+        expr = texto.replace(
+            "derivada de",
+            ""
+        ).strip()
 
-        expr = expr.replace("deriva", "")
-        expr = expr.replace("derivada de", "")
-        expr = expr.replace("derivada", "")
-        expr = expr.strip()
+        print("DERIVADA:", expr)
+
+        return {
+            "respuesta": resolver_derivada(expr),
+            "grafica": None
+        }
+
+    elif texto.startswith("deriva"):
+
+        expr = texto.replace(
+            "deriva",
+            ""
+        ).strip()
 
         print("DERIVADA:", expr)
 
@@ -439,8 +449,16 @@ def router(pregunta):
 
         expr = texto
 
-        expr = expr.replace("integral de", "")
-        expr = expr.replace("integral", "")
+        expr = expr.replace(
+            "integral de",
+            ""
+        )
+
+        expr = expr.replace(
+            "integral",
+            ""
+        )
+
         expr = expr.strip()
 
         return {
@@ -456,9 +474,19 @@ def router(pregunta):
 
         try:
 
-            partes = texto.split("de")
+            expr = texto
 
-            expr = partes[1].strip()
+            expr = expr.replace(
+                "limite de",
+                ""
+            )
+
+            expr = expr.replace(
+                "límite de",
+                ""
+            )
+
+            expr = expr.strip()
 
             return {
                 "respuesta": resolver_limite(
@@ -468,10 +496,12 @@ def router(pregunta):
                 "grafica": None
             }
 
-        except:
+        except Exception as e:
+
+            print("ERROR LIMITE:", e)
 
             return {
-                "respuesta": "Formato de límite inválido.",
+                "respuesta": "Error resolviendo límite.",
                 "grafica": None
             }
 
