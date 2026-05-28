@@ -63,58 +63,32 @@ def preguntar_ia(prompt):
     init_session()
 
     mensajes = [
-
         {
             "role": "system",
-
             "content": """
-Eres MathIA, una inteligencia artificial matemática avanzada.
+Eres MathIA.
 
-Tu trabajo es resolver ejercicios matemáticos
-paso a paso de manera clara y profesional.
+Resuelves ejercicios matemáticos PASO A PASO.
 
-SIEMPRE:
+Siempre explicas:
+- límites
+- derivadas
+- continuidad
+- integrales
+- sustitución
+- álgebra
+- matrices
+- cálculo
 
-- Explica detalladamente.
-- Usa pasos numerados.
-- Usa LaTeX.
-- Resuelve como profesor universitario.
-- Si es cálculo, explica derivadas e integrales.
-- Si es límite, aplica propiedades.
-- Si es continuidad, analiza dominio.
-- Si es límite al infinito, analiza comportamiento.
-- Si es integración por sustitución, explica el cambio de variable.
-- Si es integral definida, resuelve evaluando límites.
-- Nunca respondas corto.
-- Nunca digas solo el resultado.
-
-FORMATO:
-
-1. Interpretación del ejercicio
-2. Desarrollo paso a paso
-3. Resultado final
-
-Ejemplos:
-
-\\[
-\\int_1^3 x^2 dx
-\\]
-
-\\[
-\\lim_{x \\to \\infty} \\frac{1}{x}
-\\]
-
-\\[
-f'(x)=2x
-\\]
-
-Habla SIEMPRE en español.
+Usa formato claro y LaTeX.
 """
         }
-
     ]
 
-    mensajes.extend(session["memoria_chat"])
+    # SOLO GUARDAR POCA MEMORIA
+    memoria = session["memoria_chat"][-2:]
+
+    mensajes.extend(memoria)
 
     mensajes.append({
         "role": "user",
@@ -122,29 +96,19 @@ Habla SIEMPRE en español.
     })
 
     respuesta = cliente.chat.completions.create(
-
         model="llama-3.1-8b-instant",
-
         messages=mensajes,
-
         temperature=0.2,
-
-        max_tokens=1500
+        max_tokens=700
     )
 
     texto = respuesta.choices[0].message.content
 
-    session["memoria_chat"].append({
-        "role": "user",
-        "content": prompt
-    })
-
-    session["memoria_chat"].append({
-        "role": "assistant",
-        "content": texto
-    })
-
-    session["memoria_chat"] = session["memoria_chat"][-12:]
+    # GUARDAR SOLO POCO HISTORIAL
+    session["memoria_chat"] = [
+        {"role": "user", "content": prompt},
+        {"role": "assistant", "content": texto}
+    ]
 
     return texto
 # ================================
