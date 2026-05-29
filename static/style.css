@@ -724,7 +724,13 @@ MARKDOWN IA
 
 .mensaje mjx-container{
 
-    font-size:120% !important;
+    max-width:100% !important;
+
+    overflow-x:auto !important;
+
+    overflow-y:hidden !important;
+
+    display:block !important;
 }
 
 /* CAJAS */
@@ -759,4 +765,45 @@ mjx-container{
     overflow-wrap:anywhere;
 
     word-break:break-word;
+}
+/* FORMULAS EN CELULAR */
+
+@media screen and (max-width:768px){
+
+    .mensaje mjx-container{
+
+        font-size:90% !important;
+    }
+
+}
+.MathJax{
+
+    max-width:100% !important;
+}
+/* =========================
+MATHJAX RESPONSIVE
+========================= */
+
+.mensaje mjx-container{
+
+    display:block !important;
+
+    max-width:100% !important;
+
+    overflow-x:auto !important;
+
+    overflow-y:hidden !important;
+}
+
+.MathJax{
+
+    max-width:100% !important;
+}
+
+@media screen and (max-width:768px){
+
+    .mensaje mjx-container{
+
+        font-size:90% !important;
+    }
 }
