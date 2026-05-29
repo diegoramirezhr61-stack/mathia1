@@ -164,6 +164,30 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
         Enviar
         </button>
 
+        <!-- CONTROLES VOZ -->
+
+<div class="controles-voz">
+
+    <button
+    class="voz-btn"
+    onclick="pausarVoz()">
+    ⏸
+    </button>
+
+    <button
+    class="voz-btn"
+    onclick="continuarVoz()">
+    ▶
+    </button>
+
+    <button
+    class="voz-btn"
+    onclick="detenerVoz()">
+    ⏹
+    </button>
+
+</div>
+
     </div>
 
 </main>
@@ -173,8 +197,12 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
 <script>
 
 let usarVoz = false;
+
 let totalPreguntas = 0;
+
 let totalGraficas = 0;
+
+let vozActual = null;
 
 // =========================
 // MENSAJES
@@ -301,16 +329,21 @@ async function enviarPregunta() {
 
         if (usarVoz) {
 
-            const voz = new SpeechSynthesisUtterance(
-                datos.respuesta
-            );
+    speechSynthesis.cancel();
 
-            voz.lang = "es-ES";
+    vozActual =
+    new SpeechSynthesisUtterance(
+        datos.respuesta
+    );
 
-            speechSynthesis.cancel();
+    vozActual.lang = "es-ES";
 
-            speechSynthesis.speak(voz);
-        }
+    vozActual.rate = 1;
+
+    vozActual.pitch = 1;
+
+    speechSynthesis.speak(vozActual);
+}
 
         // GRAFICA
 
@@ -393,6 +426,24 @@ function escucharVoz() {
     };
 }
 
+// =========================
+// CONTROLES VOZ
+// =========================
+
+function pausarVoz(){
+
+    speechSynthesis.pause();
+}
+
+function continuarVoz(){
+
+    speechSynthesis.resume();
+}
+
+function detenerVoz(){
+
+    speechSynthesis.cancel();
+}
 // =========================
 // SIDEBAR MOBILE
 // =========================
