@@ -174,8 +174,11 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
 <script>
 
 let usarVoz = false;
+
 let totalPreguntas = 0;
+
 let totalGraficas = 0;
+
 
 // =========================
 // MENSAJES
@@ -302,16 +305,21 @@ async function enviarPregunta() {
 
         if (usarVoz) {
 
-            const voz = new SpeechSynthesisUtterance(
-                datos.respuesta
-            );
+    speechSynthesis.cancel();
 
-            voz.lang = "es-ES";
+    const voz =
+    new SpeechSynthesisUtterance(
+        datos.respuesta
+    );
 
-            speechSynthesis.cancel();
+    voz.lang = "es-ES";
 
-            speechSynthesis.speak(voz);
-        }
+    voz.rate = 1;
+
+    voz.pitch = 1;
+
+    speechSynthesis.speak(voz);
+}
 
         // GRAFICA
 
@@ -380,16 +388,25 @@ let reconocimiento = null;
 
 function escucharVoz() {
 
-    // SI ESTÁ HABLANDO → DETENER VOZ
+    const boton =
+    document.querySelector(".icon-btn");
+
+    // =====================
+    // SI ESTÁ HABLANDO
+    // =====================
 
     if (speechSynthesis.speaking) {
 
         speechSynthesis.cancel();
 
+        boton.style.background = "#1e293b";
+
         return;
     }
 
-    // SI YA ESTÁ ESCUCHANDO → DETENER MICRO
+    // =====================
+    // SI YA ESCUCHA
+    // =====================
 
     if (escuchando && reconocimiento) {
 
@@ -397,10 +414,14 @@ function escucharVoz() {
 
         escuchando = false;
 
+        boton.style.background = "#1e293b";
+
         return;
     }
 
-    // ACTIVAR VOZ
+    // =====================
+    // ACTIVAR MICRO
+    // =====================
 
     usarVoz = true;
 
@@ -412,6 +433,17 @@ function escucharVoz() {
     reconocimiento.start();
 
     escuchando = true;
+
+    // EFECTO VISUAL
+
+    boton.style.background = "#ef4444";
+
+    boton.style.boxShadow =
+    "0 0 20px rgba(239,68,68,.7)";
+
+    // =====================
+    // RESULTADO
+    // =====================
 
     reconocimiento.onresult =
     async function(evento){
@@ -428,16 +460,36 @@ function escucharVoz() {
         escuchando = false;
 
         usarVoz = false;
+
+        boton.style.background = "#1e293b";
+
+        boton.style.boxShadow = "none";
     };
+
+    // =====================
+    // ERROR
+    // =====================
 
     reconocimiento.onerror = function(){
 
         escuchando = false;
+
+        boton.style.background = "#1e293b";
+
+        boton.style.boxShadow = "none";
     };
+
+    // =====================
+    // FIN
+    // =====================
 
     reconocimiento.onend = function(){
 
         escuchando = false;
+
+        boton.style.background = "#1e293b";
+
+        boton.style.boxShadow = "none";
     };
 }
 
