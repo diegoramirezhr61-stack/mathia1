@@ -163,30 +163,7 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
         onclick="enviarPregunta()">
         Enviar
         </button>
-
-        <!-- CONTROLES VOZ -->
-
-<div class="controles-voz">
-
-    <button
-    class="voz-btn"
-    onclick="pausarVoz()">
-    ⏸
-    </button>
-
-    <button
-    class="voz-btn"
-    onclick="continuarVoz()">
-    ▶
-    </button>
-
-    <button
-    class="voz-btn"
-    onclick="detenerVoz()">
-    ⏹
-    </button>
-
-</div>
+        
 
     </div>
 
@@ -197,12 +174,8 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
 <script>
 
 let usarVoz = false;
-
 let totalPreguntas = 0;
-
 let totalGraficas = 0;
-
-let vozActual = null;
 
 // =========================
 // MENSAJES
@@ -329,21 +302,16 @@ async function enviarPregunta() {
 
         if (usarVoz) {
 
-    speechSynthesis.cancel();
+            const voz = new SpeechSynthesisUtterance(
+                datos.respuesta
+            );
 
-    vozActual =
-    new SpeechSynthesisUtterance(
-        datos.respuesta
-    );
+            voz.lang = "es-ES";
 
-    vozActual.lang = "es-ES";
+            speechSynthesis.cancel();
 
-    vozActual.rate = 1;
-
-    vozActual.pitch = 1;
-
-    speechSynthesis.speak(vozActual);
-}
+            speechSynthesis.speak(voz);
+        }
 
         // GRAFICA
 
@@ -402,48 +370,77 @@ document.getElementById("pregunta")
 // VOZ
 // =========================
 
+let escuchando = false;
+
+let reconocimiento = null;
+
+// =========================
+// VOZ INTELIGENTE
+// =========================
+
 function escucharVoz() {
+
+    // SI ESTÁ HABLANDO → DETENER VOZ
+
+    if (speechSynthesis.speaking) {
+
+        speechSynthesis.cancel();
+
+        return;
+    }
+
+    // SI YA ESTÁ ESCUCHANDO → DETENER MICRO
+
+    if (escuchando && reconocimiento) {
+
+        reconocimiento.stop();
+
+        escuchando = false;
+
+        return;
+    }
+
+    // ACTIVAR VOZ
 
     usarVoz = true;
 
-    const reconocimiento = new webkitSpeechRecognition();
+    reconocimiento =
+    new webkitSpeechRecognition();
 
     reconocimiento.lang = "es-ES";
 
     reconocimiento.start();
 
-    reconocimiento.onresult = async function(evento){
+    escuchando = true;
+
+    reconocimiento.onresult =
+    async function(evento){
 
         const texto =
         evento.results[0][0].transcript;
 
-        document.getElementById("pregunta")
-        .value = texto;
+        document.getElementById(
+            "pregunta"
+        ).value = texto;
 
         await enviarPregunta();
 
+        escuchando = false;
+
         usarVoz = false;
+    };
+
+    reconocimiento.onerror = function(){
+
+        escuchando = false;
+    };
+
+    reconocimiento.onend = function(){
+
+        escuchando = false;
     };
 }
 
-// =========================
-// CONTROLES VOZ
-// =========================
-
-function pausarVoz(){
-
-    speechSynthesis.pause();
-}
-
-function continuarVoz(){
-
-    speechSynthesis.resume();
-}
-
-function detenerVoz(){
-
-    speechSynthesis.cancel();
-}
 // =========================
 // SIDEBAR MOBILE
 // =========================
