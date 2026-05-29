@@ -649,3 +649,86 @@ RESPONSIVE
         padding:0 18px;
     }
 }
+/* =========================
+MARKDOWN IA
+========================= */
+
+.mensaje h1{
+
+    font-size:34px;
+
+    margin-bottom:20px;
+
+    color:#38bdf8;
+
+    border-bottom:2px solid #38bdf8;
+
+    padding-bottom:10px;
+}
+
+.mensaje h2{
+
+    font-size:28px;
+
+    margin-top:25px;
+
+    margin-bottom:15px;
+
+    color:#38bdf8;
+}
+
+.mensaje h3{
+
+    font-size:22px;
+
+    margin-top:20px;
+
+    margin-bottom:10px;
+
+    color:#06b6d4;
+}
+
+/* NEGRITAS */
+
+.mensaje strong{
+
+    color:white;
+
+    font-weight:700;
+}
+
+/* LISTAS */
+
+.mensaje ul{
+
+    margin-left:20px;
+
+    margin-top:10px;
+
+    margin-bottom:10px;
+}
+
+.mensaje li{
+
+    margin-bottom:8px;
+}
+
+/* FORMULAS */
+
+.mensaje mjx-container{
+
+    font-size:120% !important;
+}
+
+/* CAJAS */
+
+.mensaje blockquote{
+
+    border-left:4px solid #38bdf8;
+
+    padding-left:15px;
+
+    margin:15px 0;
+
+    color:#cbd5e1;
+}
