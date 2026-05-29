@@ -143,6 +143,13 @@ def normalizar_funcion(texto):
     texto = texto.replace("²", "**2")
     texto = texto.replace("³", "**3")
 
+    texto = texto.replace("funcion de", "")
+    texto = texto.replace("función de", "")
+    texto = texto.replace("funcion", "")
+    texto = texto.replace("función", "")
+
+    if "=" in texto:
+        texto = texto.split("=")[1].strip()
     return texto
 
 # ================================
@@ -164,6 +171,8 @@ def generar_grafica(funcion):
         funcion = funcion.replace("dibujar", "")
 
         funcion = funcion.strip()
+        if "=" in funcion:
+         funcion = funcion.split("=")[1].strip()
 
         # potencia
         funcion = funcion.replace("^", "**")
@@ -382,14 +391,20 @@ def router(pregunta):
 
     ]):
 
-        funcion = texto
+        funcion = normalizar_funcion(texto)
 
         grafica = generar_grafica(funcion)
 
-        return {
-            "respuesta": "Gráfica generada correctamente.",
-            "grafica": grafica
-        }
+        if grafica:
+           return {
+        "respuesta": "Gráfica generada correctamente.",
+        "grafica": grafica
+    }
+        else:
+          return {
+        "respuesta": "No pude interpretar la función para graficarla.",
+        "grafica": None
+    }
 
     # =========================
     # DERIVADAS
