@@ -155,14 +155,12 @@ def normalizar_funcion(texto):
 # ================================
 # GRAFICAS CORREGIDAS
 # ================================
-
 def generar_grafica(funcion):
 
     try:
 
         print("FUNCION ORIGINAL:", funcion)
 
-        # limpiar texto
         funcion = funcion.lower()
 
         funcion = funcion.replace("grafica", "")
@@ -171,30 +169,36 @@ def generar_grafica(funcion):
         funcion = funcion.replace("dibujar", "")
 
         funcion = funcion.strip()
-        if "=" in funcion:
-         funcion = funcion.split("=")[1].strip()
 
-        # potencia
+        if "=" in funcion:
+            funcion = funcion.split("=")[1].strip()
+
         funcion = funcion.replace("^", "**")
 
-        print("FUNCION LIMPIA:", funcion)
+        from sympy.parsing.sympy_parser import (
+            parse_expr,
+            standard_transformations,
+            implicit_multiplication_application
+        )
 
-        # variable
+        transformaciones = (
+            standard_transformations +
+            (implicit_multiplication_application,)
+        )
+
         x = symbols("x")
 
-        # convertir expresion
-        expr = sympify(funcion)
+        expr = parse_expr(
+            funcion,
+            transformations=transformaciones
+        )
 
-        # convertir a numpy
         f = lambdify(x, expr, "numpy")
 
-        # valores x
         xs = np.linspace(-10, 10, 500)
 
-        # valores y
         ys = f(xs)
 
-        # evitar errores infinitos
         ys = np.nan_to_num(
             ys,
             nan=0.0,
@@ -202,20 +206,17 @@ def generar_grafica(funcion):
             neginf=0.0
         )
 
-        # figura
         plt.figure(figsize=(7,5))
 
         plt.plot(xs, ys)
 
         plt.axhline(0, linewidth=1)
-
         plt.axvline(0, linewidth=1)
 
         plt.grid(True)
 
         plt.title(f"f(x) = {funcion}")
 
-        # guardar
         img = io.BytesIO()
 
         plt.savefig(
@@ -239,7 +240,6 @@ def generar_grafica(funcion):
         print("ERROR GRAFICA:", e)
 
         return None
-
 # ================================
 # VARIABLE GLOBAL
 # ================================
