@@ -150,11 +150,20 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
 
         <!-- MICRO -->
 
-        <button
-        class="icon-btn"
-        onclick="escucharVoz()">
-        🎤
-        </button>
+        <div class="micro-container">
+
+    <button
+    class="icon-btn"
+    id="microBtn"
+    onclick="escucharVoz()">
+    🎤
+    </button>
+
+    <span id="estadoVoz">
+        Listo
+    </span>
+
+</div>
 
         <!-- ENVIAR -->
 
@@ -318,7 +327,27 @@ async function enviarPregunta() {
 
     voz.pitch = 1;
 
-    speechSynthesis.speak(voz);
+    const boton =
+document.getElementById("microBtn");
+
+const estado =
+document.getElementById("estadoVoz");
+
+voz.onstart = ()=>{
+
+    boton.classList.add("hablando");
+
+    estado.innerText = "Hablando...";
+};
+
+voz.onend = ()=>{
+
+    boton.classList.remove("hablando");
+
+    estado.innerText = "Listo";
+};
+
+speechSynthesis.speak(voz);
 }
 
         // GRAFICA
@@ -390,6 +419,8 @@ function escucharVoz() {
 
     const boton =
     document.querySelector(".icon-btn");
+    const estado =
+document.getElementById("estadoVoz");
 
     // =====================
     // SI ESTÁ HABLANDO
@@ -399,7 +430,9 @@ function escucharVoz() {
 
         speechSynthesis.cancel();
 
-        boton.style.background = "#1e293b";
+        boton.classList.add("escuchando");
+
+estado.innerText = "Escuchando...";
 
         return;
     }
@@ -461,9 +494,9 @@ function escucharVoz() {
 
         usarVoz = false;
 
-        boton.style.background = "#1e293b";
+       boton.classList.remove("escuchando");
 
-        boton.style.boxShadow = "none";
+estado.innerText = "Listo";
     };
 
     // =====================
