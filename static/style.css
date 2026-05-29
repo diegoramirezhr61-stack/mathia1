@@ -16,7 +16,7 @@ body{
 
     font-family:'Poppins',sans-serif;
 
-    overflow:hidden;
+    overflow-x:hidden;
 }
 
 /* =========================
@@ -230,9 +230,9 @@ CHAT CONTAINER
 
     flex-direction:column;
 
-    height:100vh;
+    height:100dvh;
 
-    overflow:hidden;
+    min-height:0;
 }
 
 /* =========================
@@ -243,7 +243,11 @@ CHAT
 
     flex:1;
 
+    min-height:0;
+
     overflow-y:auto;
+
+    -webkit-overflow-scrolling:touch;
 
     padding:30px;
 
@@ -600,29 +604,32 @@ RESPONSIVE
 
     .chat{
 
-        padding-top:80px;
+    padding-top:80px;
 
-        padding-left:15px;
-        padding-right:15px;
+    padding-left:15px;
 
-        padding-bottom:120px;
-    }
+    padding-right:15px;
+
+    padding-bottom:350px;
+}
 
     /* INPUT */
 
     .input-area{
 
-        position:fixed;
+    position:fixed;
 
-        bottom:0;
-        left:0;
+    bottom:0;
+    left:0;
 
-        width:100%;
+    width:100%;
 
-        padding:10px;
+    padding:10px;
 
-        background:#0b1120;
-    }
+    background:#0b1120;
+
+    z-index:9999;
+}
 
     textarea{
 
@@ -731,4 +738,25 @@ MARKDOWN IA
     margin:15px 0;
 
     color:#cbd5e1;
+}
+/* =========================
+MATHJAX MOBILE
+========================= */
+
+mjx-container{
+
+    overflow-x:auto !important;
+
+    overflow-y:hidden !important;
+
+    max-width:100% !important;
+}
+
+/* FORMULAS GRANDES */
+
+.mensaje{
+
+    overflow-wrap:anywhere;
+
+    word-break:break-word;
 }
