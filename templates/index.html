@@ -150,20 +150,11 @@ src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
 
         <!-- MICRO -->
 
-        <div class="micro-container">
-
-    <button
-    class="icon-btn"
-    id="microBtn"
-    onclick="escucharVoz()">
-    🎤
-    </button>
-
-    <span id="estadoVoz">
-        Listo
-    </span>
-
-</div>
+        <button
+        class="icon-btn"
+        onclick="escucharVoz()">
+        🎤
+        </button>
 
         <!-- ENVIAR -->
 
@@ -187,6 +178,7 @@ let usarVoz = false;
 let totalPreguntas = 0;
 
 let totalGraficas = 0;
+
 
 
 // =========================
@@ -314,41 +306,16 @@ async function enviarPregunta() {
 
         if (usarVoz) {
 
-    speechSynthesis.cancel();
+            const voz = new SpeechSynthesisUtterance(
+                datos.respuesta
+            );
 
-    const voz =
-    new SpeechSynthesisUtterance(
-        datos.respuesta
-    );
+            voz.lang = "es-ES";
 
-    voz.lang = "es-ES";
+            speechSynthesis.cancel();
 
-    voz.rate = 1;
-
-    voz.pitch = 1;
-
-    const boton =
-document.getElementById("microBtn");
-
-const estado =
-document.getElementById("estadoVoz");
-
-voz.onstart = ()=>{
-
-    boton.classList.add("hablando");
-
-    estado.innerText = "Hablando...";
-};
-
-voz.onend = ()=>{
-
-    boton.classList.remove("hablando");
-
-    estado.innerText = "Listo";
-};
-
-speechSynthesis.speak(voz);
-}
+            speechSynthesis.speak(voz);
+        }
 
         // GRAFICA
 
@@ -417,29 +384,16 @@ let reconocimiento = null;
 
 function escucharVoz() {
 
-    const boton =
-    document.querySelector(".icon-btn");
-    const estado =
-document.getElementById("estadoVoz");
-
-    // =====================
-    // SI ESTÁ HABLANDO
-    // =====================
+    // SI ESTÁ HABLANDO → DETENER VOZ
 
     if (speechSynthesis.speaking) {
 
         speechSynthesis.cancel();
 
-        boton.classList.add("escuchando");
-
-estado.innerText = "Escuchando...";
-
         return;
     }
 
-    // =====================
-    // SI YA ESCUCHA
-    // =====================
+    // SI YA ESTÁ ESCUCHANDO → DETENER MICRO
 
     if (escuchando && reconocimiento) {
 
@@ -447,14 +401,10 @@ estado.innerText = "Escuchando...";
 
         escuchando = false;
 
-        boton.style.background = "#1e293b";
-
         return;
     }
 
-    // =====================
-    // ACTIVAR MICRO
-    // =====================
+    // ACTIVAR VOZ
 
     usarVoz = true;
 
@@ -466,17 +416,6 @@ estado.innerText = "Escuchando...";
     reconocimiento.start();
 
     escuchando = true;
-
-    // EFECTO VISUAL
-
-    boton.style.background = "#ef4444";
-
-    boton.style.boxShadow =
-    "0 0 20px rgba(239,68,68,.7)";
-
-    // =====================
-    // RESULTADO
-    // =====================
 
     reconocimiento.onresult =
     async function(evento){
@@ -493,36 +432,16 @@ estado.innerText = "Escuchando...";
         escuchando = false;
 
         usarVoz = false;
-
-       boton.classList.remove("escuchando");
-
-estado.innerText = "Listo";
     };
-
-    // =====================
-    // ERROR
-    // =====================
 
     reconocimiento.onerror = function(){
 
         escuchando = false;
-
-        boton.style.background = "#1e293b";
-
-        boton.style.boxShadow = "none";
     };
-
-    // =====================
-    // FIN
-    // =====================
 
     reconocimiento.onend = function(){
 
         escuchando = false;
-
-        boton.style.background = "#1e293b";
-
-        boton.style.boxShadow = "none";
     };
 }
 
