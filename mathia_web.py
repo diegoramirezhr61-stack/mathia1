@@ -430,7 +430,41 @@ y LaTeX.
         print("ERROR LIMITE:", e)
 
         return f"Error en límite: {e}"
-    
+
+def resolver_ecuacion(ecuacion):
+
+    try:
+
+        ecuacion = ecuacion.replace("^", "**")
+
+        izquierda, derecha = ecuacion.split("=")
+
+        expr_izq = sympify(izquierda)
+        expr_der = sympify(derecha)
+
+        resultado = solve(expr_izq - expr_der, x)
+
+        session["ultimo_resultado"] = str(resultado)
+
+        prompt = f"""
+        Resuelve paso a paso la ecuación:
+
+        {ecuacion}
+
+        La solución correcta es:
+
+        {resultado}
+
+        Explica detalladamente usando álgebra y LaTeX.
+        """
+
+        return preguntar_ia(prompt)
+
+    except Exception as e:
+
+        print("ERROR ECUACION:", e)
+
+        return f"Error resolviendo ecuación: {e}"
 # ================================
 # ROUTER INTELIGENTE
 # ================================
@@ -685,7 +719,16 @@ def router(pregunta):
                 "respuesta": "Error resolviendo límite.",
                 "grafica": None
             }
+    # =========================
+    # ECUACIONES
+    # =========================
 
+    if "=" in texto:
+
+        return {
+            "respuesta": resolver_ecuacion(texto),
+            "grafica": None
+        }
     # =========================
     # IA NORMAL
     # =========================
