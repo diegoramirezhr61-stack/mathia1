@@ -809,3 +809,25 @@ html, body {
 .input-container button {
     flex-shrink: 0;
 }
+.mensaje{
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    flex-shrink: 0;
+}
+
+.mensaje *{
+    max-height: none !important;
+}
+
+.mensaje pre{
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.mensaje p,
+.mensaje ul,
+.mensaje ol,
+.mensaje div{
+    overflow: visible !important;
+}
