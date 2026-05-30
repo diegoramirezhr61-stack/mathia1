@@ -1016,7 +1016,37 @@ def router(pregunta):
             "grafica":
             None
         }
+    # =========================
+    # GRAFICAR FUNCIONES
+    # =========================
 
+    if (
+        texto.startswith("grafica ")
+        or texto.startswith("gráfica ")
+        or texto.startswith("graficar ")
+    ):
+
+        expr = texto
+
+        expr = expr.replace("grafica", "")
+        expr = expr.replace("gráfica", "")
+        expr = expr.replace("graficar", "")
+
+        expr = expr.strip()
+
+        grafica = generar_grafica(expr)
+
+        if grafica:
+
+            return {
+              "respuesta": f"📈 Gráfica de y = {expr}",
+              "grafica": grafica
+            }
+
+        return {
+           "respuesta": "No pude generar la gráfica.",
+           "grafica": None
+        }
     # =========================
     # ECUACIONES
     # =========================
@@ -1035,6 +1065,16 @@ def router(pregunta):
         "respuesta": preguntar_ia(pregunta),
         "grafica": None
     }
+def limpiar_expresion(expr):
+
+    expr = expr.replace("^", "**")
+    expr = expr.replace("²", "**2")
+    expr = expr.replace("³", "**3")
+    expr = expr.replace("⁴", "**4")
+    expr = expr.replace("−", "-")
+    expr = expr.replace("–", "-")
+
+    return expr
 
 # ================================
 # HOME
