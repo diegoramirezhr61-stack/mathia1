@@ -88,9 +88,6 @@ Siempre explicas:
 - cálculo
 
 Usa formato claro y LaTeX.
-Máximo 5 pasos.
-Explicaciones breves.
-No repetir fórmulas.
 """
         }
     ]
