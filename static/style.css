@@ -266,7 +266,9 @@ MENSAJES
 
 .mensaje{
 
-    max-width:85%;
+    max-width:100%;
+
+    width:fit-content;
 
     padding:16px 20px;
 
@@ -274,7 +276,13 @@ MENSAJES
 
     line-height:1.8;
 
+    overflow-x:auto;
+
+    overflow-y:hidden;
+
     word-wrap:break-word;
+
+    overflow-wrap:anywhere;
 
     animation:fadeIn .3s ease;
 }
@@ -602,7 +610,7 @@ RESPONSIVE
 
     /* CHAT */
 
-    .chat{
+.chat{
 
     padding-top:80px;
 
@@ -610,7 +618,7 @@ RESPONSIVE
 
     padding-right:15px;
 
-    padding-bottom:350px;
+    padding-bottom:120px;
 }
 
     /* INPUT */
@@ -806,4 +814,42 @@ MATHJAX RESPONSIVE
 
         font-size:90% !important;
     }
+}
+/* =========================
+   SOLUCION MATHJAX MOVIL
+   ========================= */
+
+.mensaje{
+
+    overflow-x:auto !important;
+}
+
+.mensaje mjx-container{
+
+    display:block !important;
+
+    width:100% !important;
+
+    overflow-x:auto !important;
+
+    overflow-y:hidden !important;
+
+    white-space:nowrap !important;
+}
+
+.MathJax{
+
+    overflow-x:auto !important;
+}
+
+.chat{
+
+    overflow-x:hidden;
+}
+
+/* FORMULAS MUY GRANDES */
+
+mjx-container[jax="SVG"] svg{
+
+    max-width:none !important;
 }
