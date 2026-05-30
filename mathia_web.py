@@ -88,6 +88,9 @@ Siempre explicas:
 - cálculo
 
 Usa formato claro y LaTeX.
+Máximo 5 pasos.
+Explicaciones breves.
+No repetir fórmulas.
 """
         }
     ]
@@ -106,7 +109,7 @@ Usa formato claro y LaTeX.
         model="llama-3.1-8b-instant",
         messages=mensajes,
         temperature=0.2,
-        max_tokens=700
+        max_tokens=350
     )
 
     texto = respuesta.choices[0].message.content
