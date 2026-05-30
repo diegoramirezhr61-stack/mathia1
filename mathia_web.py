@@ -53,6 +53,10 @@ def init_session():
 
     if "historial_graficas" not in session:
         session["historial_graficas"] = []
+    if "ultimo_resultado" not in session:
+        session["ultimo_resultado"] = ""  
+    if "historial_resultados" not in session:
+        session["historial_resultados"] = [] 
 
 # ================================
 # IA GROQ MEJORADA
@@ -86,7 +90,7 @@ Usa formato claro y LaTeX.
     ]
 
     # SOLO GUARDAR POCA MEMORIA
-    memoria = session["memoria_chat"][-2:]
+    memoria = session["memoria_chat"][-10:]
 
     mensajes.extend(memoria)
 
@@ -105,11 +109,16 @@ Usa formato claro y LaTeX.
     texto = respuesta.choices[0].message.content
 
     # GUARDAR SOLO POCO HISTORIAL
-    session["memoria_chat"] = [
-        {"role": "user", "content": prompt},
-        {"role": "assistant", "content": texto}
-    ]
+    session["memoria_chat"].append({
+    "role": "user",
+    "content": prompt
+})
 
+    session["memoria_chat"].append({
+    "role": "assistant",
+    "content": texto
+})
+    session["memoria_chat"] = session["memoria_chat"][-10:]
     return texto
 # ================================
 # NORMALIZAR FUNCION
@@ -258,6 +267,9 @@ def resolver_derivada(expresion):
 
         resultado = diff(expr, x)
 
+        session["ultimo_resultado"] = str(resultado)
+        session["historial_resultados"].append(str(resultado))
+
         prompt = f"""
 Resuelve paso a paso esta derivada.
 
@@ -298,6 +310,8 @@ def resolver_integral(expresion):
         expr = sympify(expresion)
 
         resultado = integrate(expr, x)
+        session["ultimo_resultado"] = str(resultado)
+        session["historial_resultados"].append(str(resultado))
 
         prompt = f"""
 Resuelve paso a paso esta integral.
@@ -344,6 +358,9 @@ def resolver_limite(expresion, valor):
 
         resultado = limit(expr, x, valor_sympy)
 
+        session["ultimo_resultado"] = str(resultado)
+        session["historial_resultados"].append(str(resultado))
+
         prompt = f"""
 Resuelve paso a paso este límite.
 
@@ -376,6 +393,59 @@ y LaTeX.
 def router(pregunta):
 
     texto = pregunta.lower()
+
+    # =========================
+    # RESULTADO ANTERIOR
+    # =========================
+
+    if "resultado anterior" in texto:
+
+        ultimo = session.get("ultimo_resultado", "")
+
+        if not ultimo:
+
+            return {
+                "respuesta": "No hay resultado anterior guardado.",
+                "grafica": None
+            }
+
+        # DERIVAR RESULTADO ANTERIOR
+        if "deriva" in texto or "derivada" in texto:
+
+            return {
+                "respuesta": resolver_derivada(ultimo),
+                "grafica": None
+            }
+
+        # INTEGRAR RESULTADO ANTERIOR
+        if "integra" in texto or "integral" in texto:
+
+            return {
+                "respuesta": resolver_integral(ultimo),
+                "grafica": None
+            }
+
+        # GRAFICAR RESULTADO ANTERIOR
+        if (
+            "grafica" in texto or
+            "gráfica" in texto or
+            "graficar" in texto or
+            "plot" in texto
+        ):
+
+            grafica = generar_grafica(ultimo)
+
+            if grafica:
+
+                return {
+                    "respuesta": f"Gráfica del resultado anterior: {ultimo}",
+                    "grafica": grafica
+                }
+
+            return {
+                "respuesta": "No pude graficar el resultado anterior.",
+                "grafica": None
+            }
 
     # =========================
     # GRAFICAS
@@ -571,7 +641,22 @@ def dashboard():
         "mensajes_memoria":
         len(session["memoria_chat"])
     })
+@app.route("/ultimo")
+def ultimo():
 
+    init_session()
+
+    return jsonify({
+        "ultimo_resultado": session.get("ultimo_resultado", "")
+    })
+@app.route("/historial")
+def historial():
+
+    init_session()
+
+    return jsonify({
+        "historial": session.get("historial_resultados", [])
+    })
 # ================================
 # RUN
 # ================================
