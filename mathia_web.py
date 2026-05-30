@@ -272,7 +272,11 @@ def generar_grafica_maximos_minimos(funcion):
             standard_transformations +
             (implicit_multiplication_application,)
         )
-
+        funcion = funcion.replace("^", "**")
+        funcion = funcion.replace("²", "**2")
+        funcion = funcion.replace("³", "**3")
+        funcion = funcion.replace("−", "-")
+        print("FUNCION RECIBIDA:", repr(funcion))
         expr = parse_expr(
             funcion,
             transformations=transformaciones
