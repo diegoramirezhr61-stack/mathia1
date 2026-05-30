@@ -439,24 +439,45 @@ def resolver_ecuacion(ecuacion):
 
         izquierda, derecha = ecuacion.split("=")
 
-        expr_izq = sympify(izquierda)
-        expr_der = sympify(derecha)
+        from sympy.parsing.sympy_parser import (
+            parse_expr,
+            standard_transformations,
+            implicit_multiplication_application
+        )
 
-        resultado = solve(expr_izq - expr_der, x)
+        transformaciones = (
+            standard_transformations +
+            (implicit_multiplication_application,)
+        )
+
+        expr_izq = parse_expr(
+            izquierda,
+            transformations=transformaciones
+        )
+
+        expr_der = parse_expr(
+            derecha,
+            transformations=transformaciones
+        )
+
+        resultado = solve(
+            expr_izq - expr_der,
+            x
+        )
 
         session["ultimo_resultado"] = str(resultado)
 
         prompt = f"""
-        Resuelve paso a paso la ecuación:
+Resuelve paso a paso la ecuación:
 
-        {ecuacion}
+{ecuacion}
 
-        La solución correcta es:
+La solución correcta es:
 
-        {resultado}
+{resultado}
 
-        Explica detalladamente usando álgebra y LaTeX.
-        """
+Explica detalladamente usando álgebra y LaTeX.
+"""
 
         return preguntar_ia(prompt)
 
