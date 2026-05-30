@@ -486,6 +486,101 @@ Explica detalladamente usando álgebra y LaTeX.
         print("ERROR ECUACION:", e)
 
         return f"Error resolviendo ecuación: {e}"
+def resolver_maximos_minimos(expresion):
+
+    try:
+
+        expresion = expresion.replace("^", "**")
+
+        from sympy.parsing.sympy_parser import (
+            parse_expr,
+            standard_transformations,
+            implicit_multiplication_application
+        )
+
+        transformaciones = (
+            standard_transformations +
+            (implicit_multiplication_application,)
+        )
+
+        expr = parse_expr(
+            expresion,
+            transformations=transformaciones
+        )
+
+        primera = diff(expr, x)
+
+        puntos_criticos = solve(
+            primera,
+            x
+        )
+
+        segunda = diff(
+            primera,
+            x
+        )
+
+        resultado = []
+
+        for punto in puntos_criticos:
+
+            valor_segunda = segunda.subs(
+                x,
+                punto
+            )
+
+            valor_funcion = expr.subs(
+                x,
+                punto
+            )
+
+            if valor_segunda > 0:
+
+                resultado.append(
+                    f"Mínimo local en x={punto}, y={valor_funcion}"
+                )
+
+            elif valor_segunda < 0:
+
+                resultado.append(
+                    f"Máximo local en x={punto}, y={valor_funcion}"
+                )
+
+            else:
+
+                resultado.append(
+                    f"Punto crítico en x={punto}, y={valor_funcion}"
+                )
+
+        session["ultimo_resultado"] = str(expr)
+
+        prompt = f"""
+Analiza la función:
+
+{expresion}
+
+Primera derivada:
+{primera}
+
+Segunda derivada:
+{segunda}
+
+Puntos críticos:
+{puntos_criticos}
+
+Resultado:
+{resultado}
+
+Explica paso a paso usando cálculo diferencial.
+"""
+
+        return preguntar_ia(prompt)
+
+    except Exception as e:
+
+        print("ERROR MAXIMOS MINIMOS:", e)
+
+        return f"Error: {e}"
 # ================================
 # ROUTER INTELIGENTE
 # ================================
@@ -750,6 +845,36 @@ def router(pregunta):
             "respuesta": resolver_ecuacion(texto),
             "grafica": None
         }
+    # =========================
+    # MAXIMOS Y MINIMOS
+    # =========================
+
+    if (
+        texto.startswith("maximos y minimos de")
+        or
+        texto.startswith("máximos y mínimos de")
+    ):
+
+        expr = texto
+
+        expr = expr.replace(
+        "maximos y minimos de",
+        ""
+    )
+
+        expr = expr.replace(
+        "máximos y mínimos de",
+        ""
+    )
+
+        expr = expr.strip()
+
+        return {
+        "respuesta":
+        resolver_maximos_minimos(expr),
+
+        "grafica": None
+    }
     # =========================
     # IA NORMAL
     # =========================
