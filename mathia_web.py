@@ -263,7 +263,21 @@ def resolver_derivada(expresion):
 
         expresion = expresion.replace("^", "**")
 
-        expr = sympify(expresion)
+        from sympy.parsing.sympy_parser import (
+            parse_expr,
+            standard_transformations,
+            implicit_multiplication_application
+        )
+
+        transformaciones = (
+            standard_transformations +
+            (implicit_multiplication_application,)
+        )
+
+        expr = parse_expr(
+            expresion,
+            transformations=transformaciones
+        )
 
         resultado = diff(expr, x)
 
@@ -307,7 +321,21 @@ def resolver_integral(expresion):
 
         expresion = expresion.replace("^", "**")
 
-        expr = sympify(expresion)
+        from sympy.parsing.sympy_parser import (
+            parse_expr,
+            standard_transformations,
+            implicit_multiplication_application
+        )
+
+        transformaciones = (
+            standard_transformations +
+            (implicit_multiplication_application,)
+        )
+
+        expr = parse_expr(
+            expresion,
+            transformations=transformaciones
+        )
 
         resultado = integrate(expr, x)
         session["ultimo_resultado"] = str(resultado)
@@ -349,7 +377,21 @@ def resolver_limite(expresion, valor):
 
         expresion = expresion.replace("^", "**")
 
-        expr = sympify(expresion)
+        from sympy.parsing.sympy_parser import (
+            parse_expr,
+            standard_transformations,
+            implicit_multiplication_application
+        )
+
+        transformaciones = (
+            standard_transformations +
+            (implicit_multiplication_application,)
+        )
+
+        expr = parse_expr(
+            expresion,
+            transformations=transformaciones
+        )
 
         if valor == "infinito":
             valor_sympy = oo
