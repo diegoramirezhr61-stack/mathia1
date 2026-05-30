@@ -194,6 +194,7 @@ function agregarMensaje(texto, tipo="ia") {
     div.className = `mensaje ${tipo}`;
 
     div.innerHTML = marked.parse(texto);
+    div.style.overflowX = "auto";
 
     chat.appendChild(div);
 
