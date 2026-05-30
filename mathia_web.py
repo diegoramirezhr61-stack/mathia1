@@ -969,53 +969,48 @@ def router(pregunta):
         "grafica": None
     }
     # =========================
-# GRAFICAR MAXIMOS Y MINIMOS
-# =========================
+    # GRAFICAR MAXIMOS Y MINIMOS
+    # =========================
 
     if (
-       texto.startswith(
-        "grafica los maximos y minimos de"
-       )
-       or
-       texto.startswith(
-        "grafica los máximos y mínimos de"
-    )
-):
+        texto.startswith("grafica los maximos y minimos de")
+        or
+        texto.startswith("grafica los máximos y mínimos de")
+    ):
 
-     expr = texto
+        expr = texto
 
-    expr = expr.replace(
-        "grafica los maximos y minimos de",
-        ""
-    )
+        expr = expr.replace(
+            "grafica los maximos y minimos de",
+            ""
+        )
 
-    expr = expr.replace(
-        "grafica los máximos y mínimos de",
-        ""
-    )
+        expr = expr.replace(
+            "grafica los máximos y mínimos de",
+            ""
+        )
 
-    expr = expr.strip()
+        expr = expr.strip()
 
-    grafica = generar_grafica_maximos_minimos(
-        expr
-    )
+        grafica = generar_grafica_maximos_minimos(expr)
 
-    if grafica:
+        if grafica:
+
+            return {
+                "respuesta":
+                "Gráfica con máximos y mínimos detectados.",
+                "grafica":
+                grafica
+            }
 
         return {
             "respuesta":
-            "Gráfica con máximos y mínimos detectados.",
+            "No pude generar la gráfica.",
             "grafica":
-            grafica
+            None
         }
 
-    return {
-        "respuesta":
-        "No pude generar la gráfica.",
-        "grafica":
-        None
-    }
-# =========================
+    # =========================
     # ECUACIONES
     # =========================
 
@@ -1076,8 +1071,8 @@ def preguntar():
 
         return jsonify({
             "respuesta": error,
-            "grafica": None
-        })
+        "grafica": None
+    })
 
 # ================================
 # DASHBOARD
