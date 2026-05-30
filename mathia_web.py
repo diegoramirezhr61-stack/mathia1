@@ -252,6 +252,104 @@ def generar_grafica(funcion):
         print("ERROR GRAFICA:", e)
 
         return None
+def generar_grafica_maximos_minimos(funcion):
+
+    try:
+
+        from sympy.parsing.sympy_parser import (
+            parse_expr,
+            standard_transformations,
+            implicit_multiplication_application
+        )
+
+        transformaciones = (
+            standard_transformations +
+            (implicit_multiplication_application,)
+        )
+
+        expr = parse_expr(
+            funcion,
+            transformations=transformaciones
+        )
+
+        primera = diff(expr, x)
+
+        puntos = solve(
+            primera,
+            x
+        )
+
+        f = lambdify(
+            x,
+            expr,
+            "numpy"
+        )
+
+        xs = np.linspace(-10, 10, 1000)
+
+        ys = f(xs)
+
+        plt.figure(figsize=(8,6))
+
+        plt.plot(xs, ys)
+
+        for punto in puntos:
+
+            try:
+
+                px = float(punto)
+
+                py = float(
+                    expr.subs(x, punto)
+                )
+
+                plt.scatter(
+                    px,
+                    py,
+                    s=100
+                )
+
+                plt.annotate(
+                    f"({round(px,2)}, {round(py,2)})",
+                    (px, py)
+                )
+
+            except:
+                pass
+
+        plt.axhline(0)
+        plt.axvline(0)
+
+        plt.grid(True)
+
+        plt.title(
+            f"Máximos y mínimos de {funcion}"
+        )
+
+        img = io.BytesIO()
+
+        plt.savefig(
+            img,
+            format="png",
+            bbox_inches="tight"
+        )
+
+        plt.close()
+
+        img.seek(0)
+
+        return base64.b64encode(
+            img.getvalue()
+        ).decode("utf-8")
+
+    except Exception as e:
+
+        print(
+            "ERROR GRAFICA MAXIMOS:",
+            e
+        )
+
+        return None    
 # ================================
 # VARIABLE GLOBAL
 # ================================
@@ -882,6 +980,53 @@ def router(pregunta):
     return {
         "respuesta": preguntar_ia(pregunta),
         "grafica": None
+    }
+# =========================
+# GRAFICAR MAXIMOS Y MINIMOS
+# =========================
+
+    if (
+       texto.startswith(
+        "grafica los maximos y minimos de"
+       )
+       or
+       texto.startswith(
+        "grafica los máximos y mínimos de"
+    )
+):
+
+     expr = texto
+
+    expr = expr.replace(
+        "grafica los maximos y minimos de",
+        ""
+    )
+
+    expr = expr.replace(
+        "grafica los máximos y mínimos de",
+        ""
+    )
+
+    expr = expr.strip()
+
+    grafica = generar_grafica_maximos_minimos(
+        expr
+    )
+
+    if grafica:
+
+        return {
+            "respuesta":
+            "Gráfica con máximos y mínimos detectados.",
+            "grafica":
+            grafica
+        }
+
+    return {
+        "respuesta":
+        "No pude generar la gráfica.",
+        "grafica":
+        None
     }
 # ================================
 # HOME
