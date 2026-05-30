@@ -1066,16 +1066,18 @@ def preguntar():
 
         return jsonify(resultado)
 
-    except Exception as e:
+    except Exception:
 
-     import traceback
+        import traceback
 
-    print(traceback.format_exc())
+        error = traceback.format_exc()
 
-    return jsonify({
-        "respuesta": str(e),
-        "grafica": None
-    })
+        print(error)
+
+        return jsonify({
+            "respuesta": error,
+            "grafica": None
+        })
 
 # ================================
 # DASHBOARD
