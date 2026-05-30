@@ -19,7 +19,10 @@ from sympy import (
     integrate,
     limit,
     oo,
-    latex
+    latex,
+    simplify,
+    factor,
+    solve
 )
 # ================================
 # APP
@@ -440,6 +443,10 @@ def router(pregunta):
     # RESULTADO ANTERIOR
     # =========================
 
+     # =========================
+    # RESULTADO ANTERIOR
+    # =========================
+
     if "resultado anterior" in texto:
 
         ultimo = session.get("ultimo_resultado", "")
@@ -467,6 +474,100 @@ def router(pregunta):
                 "grafica": None
             }
 
+        # SIMPLIFICAR
+        if "simplifica" in texto:
+
+            expr = sympify(ultimo)
+
+            resultado = simplify(expr)
+
+            session["ultimo_resultado"] = str(resultado)
+
+            return {
+                "respuesta": f"Resultado simplificado:\n\n{resultado}",
+                "grafica": None
+            }
+
+        # FACTORIZAR
+        if "factoriza" in texto:
+
+            expr = sympify(ultimo)
+
+            resultado = factor(expr)
+
+            session["ultimo_resultado"] = str(resultado)
+
+            return {
+                "respuesta": f"Resultado factorizado:\n\n{resultado}",
+                "grafica": None
+            }
+
+        # RAICES
+        if "raices" in texto or "raíces" in texto:
+
+            expr = sympify(ultimo)
+
+            resultado = solve(expr, x)
+
+            return {
+                "respuesta": f"Raíces encontradas:\n\n{resultado}",
+                "grafica": None
+            }
+
+        # EVALUAR
+        if "evalua" in texto or "evalúa" in texto:
+
+            try:
+
+                valor = texto.split("=")[1].strip()
+
+                expr = sympify(ultimo)
+
+                resultado = expr.subs(x, float(valor))
+
+                return {
+                    "respuesta": f"f({valor}) = {resultado}",
+                    "grafica": None
+                }
+
+            except:
+
+                return {
+                    "respuesta":
+                    "Usa: evalua el resultado anterior en x=2",
+                    "grafica": None
+                }
+
+        # LATEX
+        if "latex" in texto:
+
+            expr = sympify(ultimo)
+
+            resultado = latex(expr)
+
+            return {
+                "respuesta": resultado,
+                "grafica": None
+            }
+
+        # TABLA DE VALORES
+        if "tabla" in texto:
+
+            expr = sympify(ultimo)
+
+            tabla = []
+
+            for i in range(-5, 6):
+
+                tabla.append(
+                    f"x={i} -> y={expr.subs(x, i)}"
+                )
+
+            return {
+                "respuesta": "\n".join(tabla),
+                "grafica": None
+            }
+
         # GRAFICAR RESULTADO ANTERIOR
         if (
             "grafica" in texto or
@@ -488,35 +589,6 @@ def router(pregunta):
                 "respuesta": "No pude graficar el resultado anterior.",
                 "grafica": None
             }
-
-    # =========================
-    # GRAFICAS
-    # =========================
-
-    if any(x in texto for x in [
-
-        "grafica",
-        "gráfica",
-        "graficar",
-        "plot",
-        "dibujar"
-
-    ]):
-
-        funcion = normalizar_funcion(texto)
-
-        grafica = generar_grafica(funcion)
-
-        if grafica:
-           return {
-        "respuesta": "Gráfica generada correctamente.",
-        "grafica": grafica
-    }
-        else:
-          return {
-        "respuesta": "No pude interpretar la función para graficarla.",
-        "grafica": None
-    }
 
     # =========================
     # DERIVADAS
