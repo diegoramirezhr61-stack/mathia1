@@ -785,3 +785,27 @@ MATHJAX RESPONSIVE
 
 }
 
+html, body {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.app {
+    min-height: 100dvh;
+    height: auto;
+}
+
+.input-container {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.input-container input {
+    flex: 1;
+    min-width: 0;
+}
+
+.input-container button {
+    flex-shrink: 0;
+}
