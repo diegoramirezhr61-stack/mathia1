@@ -1068,12 +1068,14 @@ def preguntar():
 
     except Exception as e:
 
-        print("ERROR GENERAL:", e)
+     import traceback
 
-        return jsonify({
-            "respuesta": "Error en servidor",
-            "grafica": None
-        })
+    print(traceback.format_exc())
+
+    return jsonify({
+        "respuesta": str(e),
+        "grafica": None
+    })
 
 # ================================
 # DASHBOARD
