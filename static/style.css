@@ -266,9 +266,7 @@ MENSAJES
 
 .mensaje{
 
-    max-width:100%;
-
-    width:fit-content;
+    max-width:85%;
 
     padding:16px 20px;
 
@@ -276,13 +274,7 @@ MENSAJES
 
     line-height:1.8;
 
-    overflow-x:auto;
-
-    overflow-y:hidden;
-
     word-wrap:break-word;
-
-    overflow-wrap:anywhere;
 
     animation:fadeIn .3s ease;
 }
@@ -728,18 +720,6 @@ MARKDOWN IA
     margin-bottom:8px;
 }
 
-/* FORMULAS */
-
-.mensaje mjx-container{
-
-    max-width:100% !important;
-
-    overflow-x:auto !important;
-
-    overflow-y:hidden !important;
-
-    display:block !important;
-}
 
 /* CAJAS */
 
@@ -752,18 +732,6 @@ MARKDOWN IA
     margin:15px 0;
 
     color:#cbd5e1;
-}
-/* =========================
-MATHJAX MOBILE
-========================= */
-
-mjx-container{
-
-    overflow-x:auto !important;
-
-    overflow-y:hidden !important;
-
-    max-width:100% !important;
 }
 
 /* FORMULAS GRANDES */
@@ -812,44 +780,8 @@ MATHJAX RESPONSIVE
 
     .mensaje mjx-container{
 
-        font-size:90% !important;
+        font-size:80% !important;
     }
-}
-/* =========================
-   SOLUCION MATHJAX MOVIL
-   ========================= */
 
-.mensaje{
-
-    overflow-x:auto !important;
 }
 
-.mensaje mjx-container{
-
-    display:block !important;
-
-    width:100% !important;
-
-    overflow-x:auto !important;
-
-    overflow-y:hidden !important;
-
-    white-space:nowrap !important;
-}
-
-.MathJax{
-
-    overflow-x:auto !important;
-}
-
-.chat{
-
-    overflow-x:hidden;
-}
-
-/* FORMULAS MUY GRANDES */
-
-mjx-container[jax="SVG"] svg{
-
-    max-width:none !important;
-}
