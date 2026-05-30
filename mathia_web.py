@@ -634,7 +634,9 @@ def resolver_maximos_minimos(expresion):
                 x,
                 punto
             )
-
+            valor_segunda = float(
+             segunda.subs(x, punto)
+            )
             if valor_segunda > 0:
 
                 resultado.append(
@@ -937,16 +939,6 @@ def router(pregunta):
                 "grafica": None
             }
     # =========================
-    # ECUACIONES
-    # =========================
-
-    if "=" in texto:
-
-        return {
-            "respuesta": resolver_ecuacion(texto),
-            "grafica": None
-        }
-    # =========================
     # MAXIMOS Y MINIMOS
     # =========================
 
@@ -977,14 +969,6 @@ def router(pregunta):
         "grafica": None
     }
     # =========================
-    # IA NORMAL
-    # =========================
-
-    return {
-        "respuesta": preguntar_ia(pregunta),
-        "grafica": None
-    }
-# =========================
 # GRAFICAR MAXIMOS Y MINIMOS
 # =========================
 
@@ -1031,6 +1015,25 @@ def router(pregunta):
         "grafica":
         None
     }
+# =========================
+    # ECUACIONES
+    # =========================
+
+    if "=" in texto:
+
+        return {
+            "respuesta": resolver_ecuacion(texto),
+            "grafica": None
+        }
+    # =========================
+    # IA NORMAL
+    # =========================
+
+    return {
+        "respuesta": preguntar_ia(pregunta),
+        "grafica": None
+    }
+
 # ================================
 # HOME
 # ================================
