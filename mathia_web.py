@@ -87,7 +87,13 @@ Siempre explicas:
 - matrices
 - cálculo
 
-Usa formato claro y LaTeX.
+Siempre muestra:
+1. Procedimiento.
+2. Operaciones intermedias.
+3. Resultado final claramente identificado.
+
+Nunca termines la explicación sin mostrar la respuesta final.
+Usa LaTeX.
 """
         }
     ]
@@ -106,7 +112,7 @@ Usa formato claro y LaTeX.
         model="llama-3.1-8b-instant",
         messages=mensajes,
         temperature=0.2,
-        max_tokens=350
+        max_tokens=1500
     )
 
     texto = respuesta.choices[0].message.content
